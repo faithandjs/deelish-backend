@@ -1,0 +1,20 @@
+{
+  "name": "deelish-be",
+  "private": true,
+  "workspaces": [
+    "services/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run auth\" \"npm run media\" \"npm run social\"",
+    "auth": "npm run dev --workspace=services/auth-service",
+    "media": "npm run dev --workspace=services/media-service",
+    "social": "npm run dev --workspace=services/social-service"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "concurrently": "^8.2.0",
+    "typescript": "^5.4.0"
+  }
+}

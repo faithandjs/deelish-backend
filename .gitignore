@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build output
+dist/
+**/dist/
+build/
+**/build/
+
+# Environment files
+.env
+**/.env
+.env.local
+.env.*.local
+
+# SQLite databases
+**/*.db
+**/*.db-shm
+**/*.db-wal
+data/
+**/data/
+
+# Uploads (local mock storage)
+**/uploads/
+
+# RSA keys — never commit these
+**/keys/
+**/*.pem
+
+# Logs
+logs/
+**/*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Coverage
+coverage/
+**/coverage/
