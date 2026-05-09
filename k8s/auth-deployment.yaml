@@ -15,7 +15,7 @@ spec:
       containers:
         - name: auth-service
           image: deelish/auth-service:latest
-          imagePullPolicy: Never  
+          imagePullPolicy: Never
           ports:
             - containerPort: 3001
           env:
@@ -30,15 +30,14 @@ spec:
           volumeMounts:
             - name: auth-data
               mountPath: /data
-              hostPath:
-                path: /data/deelish/social      # path on the Docker Desktop VM
-                type: DirectoryOrCreate
             - name: auth-keys
               mountPath: /keys
               readOnly: true
       volumes:
         - name: auth-data
-          emptyDir: {}
+          hostPath:
+            path: /tmp/deelish/auth
+            type: DirectoryOrCreate
         - name: auth-keys
           secret:
             secretName: auth-keys

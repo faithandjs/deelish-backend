@@ -31,7 +31,7 @@ spec:
       volumes:
         - name: social-data
           hostPath:
-            path: /data/deelish/social      # path on the Docker Desktop VM
+            path: /tmp/deelish/social      # path on the Docker Desktop VM
             type: DirectoryOrCreate
 ---
 apiVersion: v1

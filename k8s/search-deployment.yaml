@@ -31,7 +31,7 @@ spec:
       volumes:
         - name: search-data
           hostPath:
-            path: /data/deelish/search      # path on the Docker Desktop VM
+            path: /tmp/deelish/search      # path on the Docker Desktop VM
             type: DirectoryOrCreate
 ---
 apiVersion: v1

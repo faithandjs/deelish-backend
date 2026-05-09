@@ -41,11 +41,11 @@ spec:
       volumes:
         - name: media-data
           hostPath:
-            path: /data/deelish/media      # path on the Docker Desktop VM
+            path: /tmp/deelish/media      # path on the Docker Desktop VM
             type: DirectoryOrCreate
         - name: media-uploads
           hostPath:
-            path: /data/deelish/uploads
+            path: /tmp/deelish/uploads
             type: DirectoryOrCreate
 ---
 apiVersion: v1
