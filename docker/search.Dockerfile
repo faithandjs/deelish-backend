@@ -20,11 +20,21 @@ RUN npm run build --workspace=services/search-service
 FROM node:20-alpine
 WORKDIR /app
 
+# Install build tools needed for better-sqlite3 native compilation
+RUN apk add --no-cache python3 make g++
+
+COPY package.json ./
+COPY tsconfig.json ./
+COPY packages/shared/package.json ./packages/shared/package.json
+COPY services/search-service/package.json ./services/search-service/package.json
+
+# Install production deps fresh inside Linux — compiles native modules correctly
+RUN npm install --workspace=packages/shared --omit=dev
+RUN npm install --workspace=services/search-service --omit=dev
+
+# Copy built JS from builder
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
-COPY --from=builder /app/packages/shared/package.json ./packages/shared/package.json
 COPY --from=builder /app/services/search-service/dist ./services/search-service/dist
-COPY --from=builder /app/services/search-service/package.json ./services/search-service/package.json
-COPY --from=builder /app/node_modules ./node_modules
 
 WORKDIR /app/services/search-service
 EXPOSE 3005

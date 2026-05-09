@@ -1,0 +1,119 @@
+### 1. Register creator
+POST http://localhost:30000/auth/register
+Content-Type: application/json
+
+{
+  "email": "creator@test.com",
+  "username": "testcreator",
+  "password": "password123",
+  "role": "creator"
+}
+
+### 2. Register consumer
+POST http://localhost:30000/auth/register
+Content-Type: application/json
+
+{
+  "email": "consumer@test.com",
+  "username": "testconsumer",
+  "password": "password123",
+  "role": "consumer"
+}
+
+### 3. Login creator — copy accessToken from response
+POST http://localhost:30000/auth/login
+Content-Type: application/json
+
+{
+  "email": "creator@test.com",
+  "password": "password123"
+}
+
+### 4. AI analyse — paste any image path
+POST http://localhost:30000/ai/analyse
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="image"; filename="test.jpg"
+Content-Type: image/jpeg
+
+< /path/to/any/image.jpg
+--boundary--
+
+### 5. Upload image — paste creator token
+POST http://localhost:30000/media/upload
+Authorization: Bearer CREATOR_TOKEN
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="image"; filename="test.jpg"
+Content-Type: image/jpeg
+
+< /path/to/any/image.jpg
+--boundary--
+
+### 6. Create social post — paste mediaId and url from step 5
+POST http://localhost:30000/social/photos
+Authorization: Bearer CREATOR_TOKEN
+Content-Type: application/json
+
+{
+  "mediaId": "MEDIA_ID_FROM_STEP_5",
+  "url": "URL_FROM_STEP_5",
+  "title": "Test photo",
+  "caption": "A test caption",
+  "tags": ["test", "demo", "outdoor"],
+  "location": "Belfast",
+  "people": ["Alice"]
+}
+
+### 7. Get feed
+GET http://localhost:30000/social/photos
+Authorization: Bearer CREATOR_TOKEN
+
+### 8. Search
+GET http://localhost:30000/search?q=outdoor
+Authorization: Bearer CREATOR_TOKEN
+
+### 9. Login consumer — copy token
+POST http://localhost:30000/auth/login
+Content-Type: application/json
+
+{
+  "email": "consumer@test.com",
+  "password": "password123"
+}
+
+### 10. Comment as consumer — paste photo id from step 7 feed
+POST http://localhost:30000/social/photos/PHOTO_ID/comment
+Authorization: Bearer CONSUMER_TOKEN
+Content-Type: application/json
+
+{
+  "body": "Great photo!"
+}
+
+### 11. Rate as consumer
+POST http://localhost:30000/social/photos/PHOTO_ID/rate
+Authorization: Bearer CONSUMER_TOKEN
+Content-Type: application/json
+
+{
+  "value": 5
+}
+
+### 12. Check analytics — paste creator userId from step 1 response
+GET http://localhost:30000/analytics/stats/CREATOR_USER_ID
+Authorization: Bearer CREATOR_TOKEN
+
+### 13. Role check — consumer trying to upload should get 403
+POST http://localhost:30000/media/upload
+Authorization: Bearer CONSUMER_TOKEN
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="image"; filename="test.jpg"
+Content-Type: image/jpeg
+
+< /path/to/any/image.jpg
+--boundary--

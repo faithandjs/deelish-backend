@@ -20,11 +20,21 @@ RUN npm run build --workspace=services/media-service
 FROM node:20-alpine
 WORKDIR /app
 
+# Install build tools needed for better-sqlite3 native compilation
+RUN apk add --no-cache python3 make g++
+
+COPY package.json ./
+COPY tsconfig.json ./
+COPY packages/shared/package.json ./packages/shared/package.json
+COPY services/media-service/package.json ./services/media-service/package.json
+
+# Install production deps fresh inside Linux — compiles native modules correctly
+RUN npm install --workspace=packages/shared --omit=dev
+RUN npm install --workspace=services/media-service --omit=dev
+
+# Copy built JS from builder
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
-COPY --from=builder /app/packages/shared/package.json ./packages/shared/package.json
 COPY --from=builder /app/services/media-service/dist ./services/media-service/dist
-COPY --from=builder /app/services/media-service/package.json ./services/media-service/package.json
-COPY --from=builder /app/node_modules ./node_modules
 
 WORKDIR /app/services/media-service
 EXPOSE 3002
