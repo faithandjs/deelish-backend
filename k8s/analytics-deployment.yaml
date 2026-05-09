@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: analytics-service
+  template:
+    metadata:
+      labels:
+        app: analytics-service
+    spec:
+      containers:
+        - name: analytics-service
+          image: deelish/analytics-service:latest
+          imagePullPolicy: Never  
+          ports:
+            - containerPort: 3006
+          env:
+            - name: PORT
+              value: "3006"
+            - name: DB_PATH
+              value: /data/analytics.db
+            - name: AUTH_SERVICE_URL
+              value: http://auth-service:3001
+          volumeMounts:
+            - name: analytics-data
+              mountPath: /data
+      volumes:
+        - name: analytics-data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-service
+spec:
+  selector:
+    app: analytics-service
+  ports:
+    - port: 3006
+      targetPort: 3006

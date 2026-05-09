@@ -5,7 +5,7 @@ import helmet from "helmet";
 import { runMigrations } from "./db/migrate";
 import { statsRepository } from "./db/statsRepository";
 import analyticsRoutes from "./routes/analyticsRoutes";
-import { errorHandler } from "./middleware/errorhandler";
+import { errorHandler } from "./middleware/errorHandler";
 import { eventBus, Events } from "@deelish-be/shared";
 import type {
   PhotoCreatedPayload,

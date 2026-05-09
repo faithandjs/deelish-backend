@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: media-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: media-service
+  template:
+    metadata:
+      labels:
+        app: media-service
+    spec:
+      containers:
+        - name: media-service
+          image: deelish/media-service:latest
+          imagePullPolicy: Never  
+          ports:
+            - containerPort: 3002
+          env:
+            - name: PORT
+              value: "3002"
+            - name: DB_PATH
+              value: /data/media.db
+            - name: UPLOADS_DIR
+              value: /uploads
+            - name: AUTH_SERVICE_URL
+              value: http://auth-service:3001
+            - name: MEDIA_BASE_URL
+              value: http://localhost:3000/media
+          volumeMounts:
+            - name: media-data
+              mountPath: /data
+            - name: media-uploads
+              mountPath: /uploads
+      volumes:
+        - name: media-data
+          emptyDir: {}
+        - name: media-uploads
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: media-service
+spec:
+  selector:
+    app: media-service
+  ports:
+    - port: 3002
+      targetPort: 3002

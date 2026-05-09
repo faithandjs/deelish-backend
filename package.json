@@ -6,17 +6,19 @@
     "packages/*"
   ],
   "scripts": {
-    "ai": "npm run dev --workspace=services/ai-service",
-    "analytics": "npm run dev --workspace=services/analytics-service",
+    "dev": "concurrently \"npm run gateway\" \"npm run auth\" \"npm run media\" \"npm run social\" \"npm run ai\" \"npm run search\" \"npm run analytics\"",
+    "gateway": "npm run dev --workspace=services/gateway",
     "auth": "npm run dev --workspace=services/auth-service",
-    "dev": "concurrently \"npm run auth\" \"npm run media\" \"npm run social\" \"npm run ai\" \"npm run search\" \"npm run analytics\"",
     "media": "npm run dev --workspace=services/media-service",
+    "social": "npm run dev --workspace=services/social-service",
+    "ai": "npm run dev --workspace=services/ai-service",
     "search": "npm run dev --workspace=services/search-service",
-    "social": "npm run dev --workspace=services/social-service"
+    "analytics": "npm run dev --workspace=services/analytics-service",
+    "docker:build": "docker build -f docker/auth.Dockerfile -t deelish/auth-service:latest . && docker build -f docker/media.Dockerfile -t deelish/media-service:latest . && docker build -f docker/social.Dockerfile -t deelish/social-service:latest . && docker build -f docker/ai.Dockerfile -t deelish/ai-service:latest . && docker build -f docker/search.Dockerfile -t deelish/search-service:latest . && docker build -f docker/analytics.Dockerfile -t deelish/analytics-service:latest . && docker build -f docker/gateway.Dockerfile -t deelish/gateway:latest ."
   },
   "devDependencies": {
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
     "concurrently": "^8.2.0",
     "typescript": "^5.4.0"
   }

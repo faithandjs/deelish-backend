@@ -1,0 +1,101 @@
+version: "3.9"
+
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: docker/gateway.Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      AUTH_SERVICE_URL: http://auth:3001
+      MEDIA_SERVICE_URL: http://media:3002
+      SOCIAL_SERVICE_URL: http://social:3003
+      AI_SERVICE_URL: http://ai:3004
+      SEARCH_SERVICE_URL: http://search:3005
+      ANALYTICS_SERVICE_URL: http://analytics:3006
+      FRONTEND_URL: http://localhost:5173
+    depends_on:
+      - auth
+      - media
+      - social
+      - ai
+      - search
+      - analytics
+
+  auth:
+    build:
+      context: .
+      dockerfile: docker/auth.Dockerfile
+    environment:
+      PORT: 3001
+      DB_PATH: /data/auth.db
+      JWT_PRIVATE_KEY_PATH: /keys/private.pem
+      JWT_PUBLIC_KEY_PATH: /keys/public.pem
+      BCRYPT_ROUNDS: 10
+    volumes:
+      - auth-data:/data
+      - ./services/auth-service/keys:/keys:ro
+
+  media:
+    build:
+      context: .
+      dockerfile: docker/media.Dockerfile
+    environment:
+      PORT: 3002
+      DB_PATH: /data/media.db
+      UPLOADS_DIR: /uploads
+      AUTH_SERVICE_URL: http://auth:3001
+      MEDIA_BASE_URL: http://localhost:3000/media
+    volumes:
+      - media-data:/data
+      - media-uploads:/uploads
+
+  social:
+    build:
+      context: .
+      dockerfile: docker/social.Dockerfile
+    environment:
+      PORT: 3003
+      DB_PATH: /data/social.db
+      AUTH_SERVICE_URL: http://auth:3001
+    volumes:
+      - social-data:/data
+
+  ai:
+    build:
+      context: .
+      dockerfile: docker/ai.Dockerfile
+    environment:
+      PORT: 3004
+      USE_MOCK_AI: "true"
+
+  search:
+    build:
+      context: .
+      dockerfile: docker/search.Dockerfile
+    environment:
+      PORT: 3005
+      DB_PATH: /data/search.db
+      AUTH_SERVICE_URL: http://auth:3001
+    volumes:
+      - search-data:/data
+
+  analytics:
+    build:
+      context: .
+      dockerfile: docker/analytics.Dockerfile
+    environment:
+      PORT: 3006
+      DB_PATH: /data/analytics.db
+      AUTH_SERVICE_URL: http://auth:3001
+    volumes:
+      - analytics-data:/data
+
+volumes:
+  auth-data:
+  media-data:
+  media-uploads:
+  social-data:
+  search-data:
+  analytics-data:

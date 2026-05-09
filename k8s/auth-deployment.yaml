@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+        - name: auth-service
+          image: deelish/auth-service:latest
+          imagePullPolicy: Never  
+          ports:
+            - containerPort: 3001
+          env:
+            - name: PORT
+              value: "3001"
+            - name: DB_PATH
+              value: /data/auth.db
+            - name: JWT_PRIVATE_KEY_PATH
+              value: /keys/private.pem
+            - name: JWT_PUBLIC_KEY_PATH
+              value: /keys/public.pem
+          volumeMounts:
+            - name: auth-data
+              mountPath: /data
+            - name: auth-keys
+              mountPath: /keys
+              readOnly: true
+      volumes:
+        - name: auth-data
+          emptyDir: {}
+        - name: auth-keys
+          secret:
+            secretName: auth-keys
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+spec:
+  selector:
+    app: auth-service
+  ports:
+    - port: 3001
+      targetPort: 3001
