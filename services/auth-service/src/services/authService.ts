@@ -5,19 +5,16 @@ import { ConflictError, UnauthorizedError } from "@deelish-be/shared";
 import type { RegisterInput, LoginInput } from "../utils/schema";
 
 export const authService = {
-  async register(input: RegisterInput) { 
-    const existingUsername = userRepository.findByUsername(input.username);
-    if (existingUsername) throw new ConflictError("Username already taken");
+  async register(input: RegisterInput) {
+    const existing = userRepository.findByUsername(input.username);
+    if (existing) throw new ConflictError("Username already taken");
 
     const hashedPassword = await bcrypt.hash(
       input.password,
       Number(process.env.BCRYPT_ROUNDS ?? 10),
     );
     const user = userRepository.create({ ...input, password: hashedPassword });
-
     const accessToken = issueAccessToken(user);
-    // const { raw, hash } = issueRefreshToken();
-    // refreshTokenRepository.create(user.id, hash, getRefreshTokenExpiry());
 
     return { accessToken, user: sanitize(user) };
   },
@@ -30,17 +27,11 @@ export const authService = {
     if (!valid) throw new UnauthorizedError("Invalid credentials");
 
     const accessToken = issueAccessToken(user);
-    // const { raw, hash } = issueRefreshToken();
-    // refreshTokenRepository.create(user.id, hash, getRefreshTokenExpiry());
-
     return { accessToken, user: sanitize(user) };
   },
 
-  async logout(rawToken: string) {
-    // const hash = hashToken(rawToken);
-    // const stored = refreshTokenRepository.findByHash(hash);
-    // if (stored) refreshTokenRepository.revoke(stored.id);
-    // Silently succeed even if token not found — idempotent logout
+  async logout() {
+    return { message: "Logged out" };
   },
 };
 

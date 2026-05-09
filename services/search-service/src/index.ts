@@ -23,7 +23,7 @@ app.get("/health", (_req, res) =>
   res.json({ status: "ok", service: "search-service" }),
 );
 
-app.use("/search", searchRoutes);
+app.use("/", searchRoutes);
 app.use(errorHandler);
 
 // ─── Event bus listeners ──────────────────────────────────────────────────────

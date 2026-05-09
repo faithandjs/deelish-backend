@@ -35,7 +35,7 @@ function notifySearchService(doc: object) {
   const req = http.request({
     hostname: "localhost",
     port: 3005,
-    path: "/search/index",
+    path: "/index",
     method: "POST",
     headers: {
       "Content-Type": "application/json",

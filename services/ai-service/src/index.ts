@@ -16,7 +16,7 @@ app.get("/health", (_req, res) =>
   res.json({ status: "ok", service: "ai-service" }),
 );
 
-app.use("/ai", aiRoutes);
+app.use("/", aiRoutes);
 app.use(errorHandler);
 
 app.listen(PORT, () => console.log(`🤖 AI service running on :${PORT}`));

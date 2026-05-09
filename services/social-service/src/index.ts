@@ -26,7 +26,7 @@ app.get("/health", (_req, res) =>
   res.json({ status: "ok", service: "social-service" }),
 );
 
-app.use("/social", socialRoutes);
+app.use("/", socialRoutes);
 app.use(errorHandler);
 
 // Wire event bus listeners

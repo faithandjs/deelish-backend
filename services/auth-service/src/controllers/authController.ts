@@ -42,15 +42,13 @@ export const authController = {
 
   async logout(req: Request, res: Response, next: NextFunction) {
     try {
-      // const { refreshToken } = validate(RefreshSchema, req.body);
-      // await authService.logout(refreshToken);
-      // res.json({ success: true, message: "Logged out" });
+      const result = await authService.logout();
+      res.json({ success: true, data: result });
     } catch (e) {
       next(e);
     }
   },
 
-  // Exposes public key so other services can validate JWTs without calling auth on every request
   getPublicKey(_req: Request, res: Response) {
     res.json({ success: true, data: { publicKey: publicKey.toString() } });
   },

@@ -6,5 +6,6 @@ const router = Router();
 
 router.get("/", authenticate, searchController.search);
 router.post("/index", searchController.indexPhoto); // called by social service internally
+router.delete("/index/:photoId", searchController.removeFromIndex);
 
 export default router;

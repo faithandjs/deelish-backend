@@ -18,7 +18,7 @@ app.get("/health", (_req, res) =>
   res.json({ status: "ok", service: "media-service" }),
 );
 
-app.use("/media", mediaRoutes);
+app.use("/", mediaRoutes);
 
 app.use(errorHandler);
 

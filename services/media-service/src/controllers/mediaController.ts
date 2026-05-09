@@ -9,6 +9,7 @@ import {
   ForbiddenError,
   ValidationError,
 } from "@deelish-be/shared";
+import http from "http";
 
 export const mediaController = {
   // POST /media/upload — creator only
@@ -101,7 +102,6 @@ export const mediaController = {
       if (photo.user_id !== req.user!.sub)
         throw new ForbiddenError("You do not own this photo");
 
-      // Delete file from disk
       const filePath = path.join(
         process.env.UPLOADS_DIR ?? "./uploads",
         photo.filename,
@@ -110,10 +110,19 @@ export const mediaController = {
 
       photoRepository.delete(photo.id);
 
-      eventBus.emit(Events.PHOTO_DELETED, {
-        mediaId: photo.id,
-        userId: photo.user_id,
-      });
+      // Notify social and search directly via HTTP (event bus doesn't work cross-container)
+      const socialUrl =
+        process.env.SOCIAL_SERVICE_URL ?? "http://localhost:3003";
+      const searchUrl =
+        process.env.SEARCH_SERVICE_URL ?? "http://localhost:3005";
+
+      // Fire and forget — don't await, don't fail upload if these are slow
+      http
+        .request(`${socialUrl}/photos/${photo.id}`, { method: "DELETE" })
+        .end();
+      http
+        .request(`${searchUrl}/index/${photo.id}`, { method: "DELETE" })
+        .end();
 
       res.json({ success: true, message: "Photo deleted" });
     } catch (e) {

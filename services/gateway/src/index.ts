@@ -1,10 +1,10 @@
-import express, { Request, Response, NextFunction } from "express";
+import "dotenv/config";
+import express, { Request, Response } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import type { IncomingMessage, ServerResponse } from "http";
-import "dotenv/config";
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
@@ -22,14 +22,6 @@ app.use(globalLimiter);
 app.get("/health", (_req: Request, res: Response) => {
   res.json({ status: "ok", service: "gateway" });
 });
-
-// Strip prefix middleware — removes /auth, /media etc before proxying
-function stripPrefix(prefix: string) {
-  return (req: Request, _res: Response, next: NextFunction) => {
-    req.url = req.url.replace(new RegExp(`^${prefix}`), "") || "/";
-    next();
-  };
-}
 
 function makeProxy(target: string) {
   return createProxyMiddleware<IncomingMessage, ServerResponse>({
@@ -59,12 +51,12 @@ const SEARCH_URL = process.env.SEARCH_SERVICE_URL ?? "http://localhost:3005";
 const ANALYTICS_URL =
   process.env.ANALYTICS_SERVICE_URL ?? "http://localhost:3006";
 
-app.use("/auth", stripPrefix("/auth"), makeProxy(AUTH_URL));
-app.use("/media", stripPrefix("/media"), makeProxy(MEDIA_URL));
-app.use("/social", stripPrefix("/social"), makeProxy(SOCIAL_URL));
-app.use("/ai", stripPrefix("/ai"), makeProxy(AI_URL));
-app.use("/search", stripPrefix("/search"), makeProxy(SEARCH_URL));
-app.use("/analytics", stripPrefix("/analytics"), makeProxy(ANALYTICS_URL));
+app.use("/auth", makeProxy(AUTH_URL));
+app.use("/media", makeProxy(MEDIA_URL));
+app.use("/social", makeProxy(SOCIAL_URL));
+app.use("/ai", makeProxy(AI_URL));
+app.use("/search", makeProxy(SEARCH_URL));
+app.use("/analytics", makeProxy(ANALYTICS_URL));
 
 app.use((_req: Request, res: Response) => {
   res

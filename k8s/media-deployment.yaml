@@ -29,6 +29,10 @@ spec:
               value: http://auth-service:3001
             - name: MEDIA_BASE_URL
               value: http://localhost:3000/media
+            - name: SOCIAL_SERVICE_URL
+              value: http://social-service:3003
+            - name: SEARCH_SERVICE_URL
+              value: http://search-service:3005
           volumeMounts:
             - name: media-data
               mountPath: /data
@@ -36,9 +40,13 @@ spec:
               mountPath: /uploads
       volumes:
         - name: media-data
-          emptyDir: {}
+          hostPath:
+            path: /data/deelish/media      # path on the Docker Desktop VM
+            type: DirectoryOrCreate
         - name: media-uploads
-          emptyDir: {}
+          hostPath:
+            path: /data/deelish/uploads
+            type: DirectoryOrCreate
 ---
 apiVersion: v1
 kind: Service

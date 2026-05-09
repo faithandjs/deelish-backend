@@ -72,4 +72,14 @@ export const searchController = {
       next(e);
     }
   },
+  removeFromIndex(req: Request, res: Response, next: NextFunction) {
+    try {
+      const param = (p: string | string[]): string =>
+        Array.isArray(p) ? p[0] : p;
+      searchRepository.remove(param(req.params.photoId));
+      res.json({ success: true });
+    } catch (e) {
+      next(e);
+    }
+  },
 };

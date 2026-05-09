@@ -3,7 +3,6 @@ POST http://localhost:30000/auth/register
 Content-Type: application/json
 
 {
-  "email": "creator@test.com",
   "username": "testcreator",
   "password": "password123",
   "role": "creator"
@@ -14,18 +13,26 @@ POST http://localhost:30000/auth/register
 Content-Type: application/json
 
 {
-  "email": "consumer@test.com",
   "username": "testconsumer",
   "password": "password123",
   "role": "consumer"
 }
 
-### 3. Login creator — copy accessToken from response
+### 3. Login creator
 POST http://localhost:30000/auth/login
 Content-Type: application/json
 
 {
-  "email": "creator@test.com",
+  "username": "testcreator",
+  "password": "password123"
+}
+
+### 3.5 Login consumer
+POST http://localhost:30000/auth/login
+Content-Type: application/json
+
+{
+  "username": "testconsumer",
   "password": "password123"
 }
 
@@ -37,29 +44,29 @@ Content-Type: multipart/form-data; boundary=boundary
 Content-Disposition: form-data; name="image"; filename="test.jpg"
 Content-Type: image/jpeg
 
-< /path/to/any/image.jpg
+</Users/user/Pictures/julia-kadel-PdEsP8rAVY0-unsplash.jpg
 --boundary--
 
 ### 5. Upload image — paste creator token
 POST http://localhost:30000/media/upload
-Authorization: Bearer CREATOR_TOKEN
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3RjcmVhdG9yIiwicm9sZSI6ImNyZWF0b3IiLCJpYXQiOjE3NzgzNDQ0OTgsImV4cCI6MTc3ODQzMDg5OCwic3ViIjoiNWRjMzNhODgtYjBlZC00MzkxLWI5MzUtYjBkMWUyODYwZjgwIn0.Ytft7Thv6WQThr4l1kMsyTS4ZsjQfgk8FPXOdPYAfZEI2KPFOXTPJM9KAcN19x_mdDql-ii6gd7-MiOXaWffkh7oq3fMVmne8JWZMbSi9CbBHGRLQGXxZdQ9NagSuCjNtrqq6LpnD6XCdyKo-LbOgI6fE1ByYvSJde6fNcZBFbxidj7s96ZamZjDCCa4ZjoUlr6X1bVe3xLIH3eacPJHorCXGyJxg5aYR1BebiGg7pyMSs4ckw0NcvhXfQ-6ww9PPcxCKw1X_PaU2YDCFT4iGd3F6qYlcpB99SEA5M9bDgCS42M2DdY2ddRdpVP0rojL6ThBDcdJR5ngWZwOtXLiKQ
 Content-Type: multipart/form-data; boundary=boundary
 
 --boundary
 Content-Disposition: form-data; name="image"; filename="test.jpg"
 Content-Type: image/jpeg
 
-< /path/to/any/image.jpg
+< /Users/user/Pictures/julia-kadel-PdEsP8rAVY0-unsplash.jpg
 --boundary--
 
 ### 6. Create social post — paste mediaId and url from step 5
 POST http://localhost:30000/social/photos
-Authorization: Bearer CREATOR_TOKEN
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3RjcmVhdG9yIiwicm9sZSI6ImNyZWF0b3IiLCJpYXQiOjE3NzgzNDQ0OTgsImV4cCI6MTc3ODQzMDg5OCwic3ViIjoiNWRjMzNhODgtYjBlZC00MzkxLWI5MzUtYjBkMWUyODYwZjgwIn0.Ytft7Thv6WQThr4l1kMsyTS4ZsjQfgk8FPXOdPYAfZEI2KPFOXTPJM9KAcN19x_mdDql-ii6gd7-MiOXaWffkh7oq3fMVmne8JWZMbSi9CbBHGRLQGXxZdQ9NagSuCjNtrqq6LpnD6XCdyKo-LbOgI6fE1ByYvSJde6fNcZBFbxidj7s96ZamZjDCCa4ZjoUlr6X1bVe3xLIH3eacPJHorCXGyJxg5aYR1BebiGg7pyMSs4ckw0NcvhXfQ-6ww9PPcxCKw1X_PaU2YDCFT4iGd3F6qYlcpB99SEA5M9bDgCS42M2DdY2ddRdpVP0rojL6ThBDcdJR5ngWZwOtXLiKQ
 Content-Type: application/json
 
 {
-  "mediaId": "MEDIA_ID_FROM_STEP_5",
-  "url": "URL_FROM_STEP_5",
+  "mediaId": "2c4c4e1c-1bb4-404d-86c5-0b25e0eac98f",
+   "url": "http://localhost:3000/media/media/file/7682e0dc-3d2e-440b-9b9d-33852f8c1fed.jpg",
   "title": "Test photo",
   "caption": "A test caption",
   "tags": ["test", "demo", "outdoor"],
@@ -69,11 +76,11 @@ Content-Type: application/json
 
 ### 7. Get feed
 GET http://localhost:30000/social/photos
-Authorization: Bearer CREATOR_TOKEN
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3RjcmVhdG9yIiwicm9sZSI6ImNyZWF0b3IiLCJpYXQiOjE3NzgzNDQ0OTgsImV4cCI6MTc3ODQzMDg5OCwic3ViIjoiNWRjMzNhODgtYjBlZC00MzkxLWI5MzUtYjBkMWUyODYwZjgwIn0.Ytft7Thv6WQThr4l1kMsyTS4ZsjQfgk8FPXOdPYAfZEI2KPFOXTPJM9KAcN19x_mdDql-ii6gd7-MiOXaWffkh7oq3fMVmne8JWZMbSi9CbBHGRLQGXxZdQ9NagSuCjNtrqq6LpnD6XCdyKo-LbOgI6fE1ByYvSJde6fNcZBFbxidj7s96ZamZjDCCa4ZjoUlr6X1bVe3xLIH3eacPJHorCXGyJxg5aYR1BebiGg7pyMSs4ckw0NcvhXfQ-6ww9PPcxCKw1X_PaU2YDCFT4iGd3F6qYlcpB99SEA5M9bDgCS42M2DdY2ddRdpVP0rojL6ThBDcdJR5ngWZwOtXLiKQ
 
 ### 8. Search
 GET http://localhost:30000/search?q=outdoor
-Authorization: Bearer CREATOR_TOKEN
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3RjcmVhdG9yIiwicm9sZSI6ImNyZWF0b3IiLCJpYXQiOjE3NzgzNDQ0OTgsImV4cCI6MTc3ODQzMDg5OCwic3ViIjoiNWRjMzNhODgtYjBlZC00MzkxLWI5MzUtYjBkMWUyODYwZjgwIn0.Ytft7Thv6WQThr4l1kMsyTS4ZsjQfgk8FPXOdPYAfZEI2KPFOXTPJM9KAcN19x_mdDql-ii6gd7-MiOXaWffkh7oq3fMVmne8JWZMbSi9CbBHGRLQGXxZdQ9NagSuCjNtrqq6LpnD6XCdyKo-LbOgI6fE1ByYvSJde6fNcZBFbxidj7s96ZamZjDCCa4ZjoUlr6X1bVe3xLIH3eacPJHorCXGyJxg5aYR1BebiGg7pyMSs4ckw0NcvhXfQ-6ww9PPcxCKw1X_PaU2YDCFT4iGd3F6qYlcpB99SEA5M9bDgCS42M2DdY2ddRdpVP0rojL6ThBDcdJR5ngWZwOtXLiKQ
 
 ### 9. Login consumer — copy token
 POST http://localhost:30000/auth/login
@@ -85,8 +92,8 @@ Content-Type: application/json
 }
 
 ### 10. Comment as consumer — paste photo id from step 7 feed
-POST http://localhost:30000/social/photos/PHOTO_ID/comment
-Authorization: Bearer CONSUMER_TOKEN
+POST http://localhost:30000/social/photos/0296fecb-6365-4a0e-8983-def2ef725d8e/comment
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3Rjb25zdW1lciIsInJvbGUiOiJjb25zdW1lciIsImlhdCI6MTc3ODM0NDc4NywiZXhwIjoxNzc4NDMxMTg3LCJzdWIiOiI3YTc3ZWE4Mi1jNzI2LTQzYmUtYWQyMi00NjYzMWE5YTQwOGUifQ.yUGZ43ZkFQ2kc5rspYRkgUpjGjF7z8J7rdyCmz6ccBY1rxrq9LUsTaSXFhUu8XaMqqwuwy3NOEIi0BqLyVTjuvb7lUTzidXyTY8V6e--Vp2fndn6H1Iw3-aFQah9oKjD3s9FbyLDtmKEEYNNmNwBvWSQiyv3VmiEQC3kQ5Yvfw16Q6l8nd44G0DEaL8FHrSm20TsCazf0SxPIcdlqMjacUPmaWOR8jo9hPLFrBSyVV95oXuN0cJb-gWg2AAa8dZaCo0OCNmDF69R5KM19l3ZsNB2_cOq1RM5QeKytJPONzRV8VniThLNSL-BMoWUPc8z-yrW-BJ4_GfJpd6M5-PYlw
 Content-Type: application/json
 
 {
@@ -95,7 +102,7 @@ Content-Type: application/json
 
 ### 11. Rate as consumer
 POST http://localhost:30000/social/photos/PHOTO_ID/rate
-Authorization: Bearer CONSUMER_TOKEN
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3Rjb25zdW1lciIsInJvbGUiOiJjb25zdW1lciIsImlhdCI6MTc3ODM0NDc4NywiZXhwIjoxNzc4NDMxMTg3LCJzdWIiOiI3YTc3ZWE4Mi1jNzI2LTQzYmUtYWQyMi00NjYzMWE5YTQwOGUifQ.yUGZ43ZkFQ2kc5rspYRkgUpjGjF7z8J7rdyCmz6ccBY1rxrq9LUsTaSXFhUu8XaMqqwuwy3NOEIi0BqLyVTjuvb7lUTzidXyTY8V6e--Vp2fndn6H1Iw3-aFQah9oKjD3s9FbyLDtmKEEYNNmNwBvWSQiyv3VmiEQC3kQ5Yvfw16Q6l8nd44G0DEaL8FHrSm20TsCazf0SxPIcdlqMjacUPmaWOR8jo9hPLFrBSyVV95oXuN0cJb-gWg2AAa8dZaCo0OCNmDF69R5KM19l3ZsNB2_cOq1RM5QeKytJPONzRV8VniThLNSL-BMoWUPc8z-yrW-BJ4_GfJpd6M5-PYlw
 Content-Type: application/json
 
 {
@@ -104,16 +111,16 @@ Content-Type: application/json
 
 ### 12. Check analytics — paste creator userId from step 1 response
 GET http://localhost:30000/analytics/stats/CREATOR_USER_ID
-Authorization: Bearer CREATOR_TOKEN
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3RjcmVhdG9yIiwicm9sZSI6ImNyZWF0b3IiLCJpYXQiOjE3NzgzNDQ0OTgsImV4cCI6MTc3ODQzMDg5OCwic3ViIjoiNWRjMzNhODgtYjBlZC00MzkxLWI5MzUtYjBkMWUyODYwZjgwIn0.Ytft7Thv6WQThr4l1kMsyTS4ZsjQfgk8FPXOdPYAfZEI2KPFOXTPJM9KAcN19x_mdDql-ii6gd7-MiOXaWffkh7oq3fMVmne8JWZMbSi9CbBHGRLQGXxZdQ9NagSuCjNtrqq6LpnD6XCdyKo-LbOgI6fE1ByYvSJde6fNcZBFbxidj7s96ZamZjDCCa4ZjoUlr6X1bVe3xLIH3eacPJHorCXGyJxg5aYR1BebiGg7pyMSs4ckw0NcvhXfQ-6ww9PPcxCKw1X_PaU2YDCFT4iGd3F6qYlcpB99SEA5M9bDgCS42M2DdY2ddRdpVP0rojL6ThBDcdJR5ngWZwOtXLiKQ
 
 ### 13. Role check — consumer trying to upload should get 403
 POST http://localhost:30000/media/upload
-Authorization: Bearer CONSUMER_TOKEN
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3Rjb25zdW1lciIsInJvbGUiOiJjb25zdW1lciIsImlhdCI6MTc3ODM0NDc4NywiZXhwIjoxNzc4NDMxMTg3LCJzdWIiOiI3YTc3ZWE4Mi1jNzI2LTQzYmUtYWQyMi00NjYzMWE5YTQwOGUifQ.yUGZ43ZkFQ2kc5rspYRkgUpjGjF7z8J7rdyCmz6ccBY1rxrq9LUsTaSXFhUu8XaMqqwuwy3NOEIi0BqLyVTjuvb7lUTzidXyTY8V6e--Vp2fndn6H1Iw3-aFQah9oKjD3s9FbyLDtmKEEYNNmNwBvWSQiyv3VmiEQC3kQ5Yvfw16Q6l8nd44G0DEaL8FHrSm20TsCazf0SxPIcdlqMjacUPmaWOR8jo9hPLFrBSyVV95oXuN0cJb-gWg2AAa8dZaCo0OCNmDF69R5KM19l3ZsNB2_cOq1RM5QeKytJPONzRV8VniThLNSL-BMoWUPc8z-yrW-BJ4_GfJpd6M5-PYlw
 Content-Type: multipart/form-data; boundary=boundary
 
 --boundary
 Content-Disposition: form-data; name="image"; filename="test.jpg"
 Content-Type: image/jpeg
 
-< /path/to/any/image.jpg
+< /Users/user/Pictures/julia-kadel-PdEsP8rAVY0-unsplash.jpg
 --boundary--

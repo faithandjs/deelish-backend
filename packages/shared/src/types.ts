@@ -2,7 +2,6 @@ export type UserRole = "creator" | "consumer";
 
 export interface User {
   id: string;
-  // email: string;
   username: string;
   role: UserRole;
   createdAt: Date;
@@ -10,8 +9,7 @@ export interface User {
 }
 
 export interface JwtPayload {
-  sub: string; // userId
-  email: string;
+  sub: string;
   username: string;
   role: UserRole;
   iat: number;

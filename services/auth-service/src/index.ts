@@ -19,7 +19,7 @@ app.get("/health", (_req, res) =>
 );
 
 // Routes
-app.use("/auth", authRoutes);
+app.use("/", authRoutes);
 
 // Error handler — must be last
 app.use(errorHandler);

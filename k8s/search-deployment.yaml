@@ -30,7 +30,9 @@ spec:
               mountPath: /data
       volumes:
         - name: search-data
-          emptyDir: {}
+          hostPath:
+            path: /data/deelish/search      # path on the Docker Desktop VM
+            type: DirectoryOrCreate
 ---
 apiVersion: v1
 kind: Service

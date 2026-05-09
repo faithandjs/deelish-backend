@@ -6,7 +6,7 @@ export async function getPublicKey(): Promise<string> {
   if (cachedPublicKey !== null) return cachedPublicKey;
 
   return new Promise((resolve, reject) => {
-    const url = `${process.env.AUTH_SERVICE_URL ?? "http://localhost:3001"}/auth/.well-known/public-key`;
+    const url = `${process.env.AUTH_SERVICE_URL ?? "http://localhost:3001"}/.well-known/public-key`;
     http
       .get(url, (res) => {
         let data = "";

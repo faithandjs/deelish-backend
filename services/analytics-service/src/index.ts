@@ -23,7 +23,7 @@ app.get("/health", (_req, res) =>
   res.json({ status: "ok", service: "analytics-service" }),
 );
 
-app.use("/analytics", analyticsRoutes);
+app.use("/", analyticsRoutes);
 app.use(errorHandler);
 
 // ─── Event listeners ──────────────────────────────────────────────────────────

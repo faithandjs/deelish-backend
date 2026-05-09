@@ -30,6 +30,9 @@ spec:
           volumeMounts:
             - name: auth-data
               mountPath: /data
+              hostPath:
+                path: /data/deelish/social      # path on the Docker Desktop VM
+                type: DirectoryOrCreate
             - name: auth-keys
               mountPath: /keys
               readOnly: true
