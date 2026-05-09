@@ -14,7 +14,10 @@ import {
   NotFoundError,
   ForbiddenError,
   ValidationError,
+  eventBus,
+  Events,
 } from "@deelish-be/shared";
+import http from "http";
 
 const param = (p: string | string[]): string => (Array.isArray(p) ? p[0] : p);
 
@@ -27,6 +30,22 @@ function parsePhoto(photo: ReturnType<typeof photoRepository.findById>) {
   };
 }
 
+function notifySearchService(doc: object) {
+  const body = JSON.stringify(doc);
+  const req = http.request({
+    hostname: "localhost",
+    port: 3005,
+    path: "/search/index",
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Content-Length": Buffer.byteLength(body),
+    },
+  });
+  req.write(body);
+  req.end();
+  // Fire and forget — search index failure should not break photo creation
+}
 export const socialController = {
   // POST /social/photos
   // Called by creator after media upload succeeds — links media record to social record
@@ -48,7 +67,17 @@ export const socialController = {
       });
 
       invalidate("feed:1", "feed:all");
-
+      notifySearchService({
+        photo_id: photo.id,
+        title: photo.title,
+        caption: photo.caption ?? "",
+        tags: JSON.parse(photo.tags),
+        location: photo.location ?? "",
+        people: JSON.parse(photo.people),
+        username: photo.username,
+        url: photo.url,
+        created_at: photo.created_at,
+      });
       res.status(201).json({ success: true, data: parsePhoto(photo) });
     } catch (e) {
       next(e);
@@ -159,6 +188,11 @@ export const socialController = {
       });
 
       invalidate(`photo:${id}`);
+      eventBus.emit(Events.COMMENT_CREATED, {
+        photoOwnerId: photo.user_id,
+        photoId: id,
+        commenterId: req.user!.sub,
+      });
 
       res.status(201).json({ success: true, data: comment });
     } catch (e) {
@@ -183,7 +217,11 @@ export const socialController = {
       });
 
       invalidate(`photo:${id}`, `feed:1:20`);
-
+      eventBus.emit(Events.RATING_CREATED, {
+        photoOwnerId: photo.user_id,
+        photoId: id,
+        raterId: req.user!.sub,
+      });
       res.json({ success: true, data: rating });
     } catch (e) {
       next(e);

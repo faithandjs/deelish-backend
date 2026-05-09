@@ -6,9 +6,12 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run auth\" \"npm run media\" \"npm run social\"",
+    "ai": "npm run dev --workspace=services/ai-service",
+    "analytics": "npm run dev --workspace=services/analytics-service",
     "auth": "npm run dev --workspace=services/auth-service",
+    "dev": "concurrently \"npm run auth\" \"npm run media\" \"npm run social\" \"npm run ai\" \"npm run search\" \"npm run analytics\"",
     "media": "npm run dev --workspace=services/media-service",
+    "search": "npm run dev --workspace=services/search-service",
     "social": "npm run dev --workspace=services/social-service"
   },
   "devDependencies": {
