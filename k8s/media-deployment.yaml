@@ -33,6 +33,8 @@ spec:
               value: http://social-service:3003
             - name: SEARCH_SERVICE_URL
               value: http://search-service:3005
+            - name: GATEWAY_URL
+              value: "http://localhost:30000"
           volumeMounts:
             - name: media-data
               mountPath: /data

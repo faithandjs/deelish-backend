@@ -1,10 +1,9 @@
 import { Router } from "express";
 import { searchController } from "../controllers/searchController";
-import { authenticate } from "../middleware/auth";
 
 const router = Router();
 
-router.get("/", authenticate, searchController.search);
+router.get("/", searchController.search); // remove authenticate
 router.post("/index", searchController.indexPhoto); // called by social service internally
 router.delete("/index/:photoId", searchController.removeFromIndex);
 

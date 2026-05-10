@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: social-service
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: social-service
@@ -25,6 +25,10 @@ spec:
               value: /data/social.db
             - name: AUTH_SERVICE_URL
               value: http://auth-service:3001
+            - name: MEDIA_SERVICE_URL
+              value: "http://media-service:3002"
+            - name: SEARCH_SERVICE_URL
+              value: "http://search-service:3005"
           volumeMounts:
             - name: social-data
               mountPath: /data

@@ -1,14 +1,14 @@
+// services/social-service/src/routes/socialRoutes.ts
 import { Router } from "express";
 import { socialController } from "../controllers/socialController";
 import { authenticate, requireRole } from "../middleware/auth";
+import { upload } from "../utils/upload"; // ← add this
 
 const router = Router();
 
-// Feed and search — any authenticated user
-router.get("/photos", authenticate, socialController.getFeed);
-router.get("/photos/search", authenticate, socialController.search);
-
-// Single photo — optionally authenticated (shows userRating if logged in)
+// Public
+router.get("/photos", socialController.getFeed);
+router.get("/photos/search", socialController.search);
 router.get("/photos/:id", socialController.getPhoto);
 
 // Creator only
@@ -16,7 +16,14 @@ router.post(
   "/photos",
   authenticate,
   requireRole("creator"),
+  upload.single("file"), // ← multer runs here, puts file on req.file
   socialController.createPhoto,
+);
+router.patch(
+  "/photos/:id",
+  authenticate,
+  requireRole("creator"),
+  socialController.updatePhoto,
 );
 router.delete(
   "/photos/:id",
@@ -25,14 +32,18 @@ router.delete(
   socialController.deletePhoto,
 );
 
-// Consumer and creator can both comment and rate
-router.post("/photos/:id/comment", authenticate, socialController.addComment);
-router.post("/photos/:id/rate", authenticate, socialController.ratePhoto);
-router.patch(
-  "/photos/:id",
+// Any authenticated user
+router.post(
+  "/photos/:id/comment",
   authenticate,
-  requireRole("creator"),
-  socialController.updatePhoto,
+  requireRole("consumer"),
+  socialController.addComment,
+);
+router.post(
+  "/photos/:id/rate",
+  authenticate,
+  requireRole("consumer"),
+  socialController.ratePhoto,
 );
 
 export default router;

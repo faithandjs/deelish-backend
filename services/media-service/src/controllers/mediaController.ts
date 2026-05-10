@@ -19,7 +19,8 @@ export const mediaController = {
 
       const userId = req.user!.sub;
       const baseUrl = process.env.MEDIA_BASE_URL ?? "http://localhost:3002";
-      const url = `${baseUrl}/media/file/${req.file.filename}`;
+      const gatewayUrl = process.env.GATEWAY_URL ?? "http://localhost:3000";
+      const url = `${gatewayUrl}/media/file/${req.file.filename}`;
 
       const photo = photoRepository.create({
         user_id: userId,
@@ -140,6 +141,9 @@ export const mediaController = {
         path.basename(param(req.params.filename)),
       );
       if (!fs.existsSync(filePath)) throw new NotFoundError("File");
+
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin"); // ← add this
+      res.setHeader("Access-Control-Allow-Origin", "*"); // ← add this
       res.sendFile(filePath);
     } catch (e) {
       next(e);

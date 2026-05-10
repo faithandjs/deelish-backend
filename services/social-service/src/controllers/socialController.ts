@@ -1,14 +1,17 @@
+// services/social-service/src/controllers/socialController.ts
 import type { Request, Response, NextFunction } from "express";
 import { photoRepository } from "../db/photoRepository";
 import { commentRepository } from "../db/commentRepository";
 import { ratingRepository } from "../db/ratingRepository";
 import { cached, invalidate } from "../utils/cache";
+import { uploadToMedia, deleteFromMedia } from "../utils/mediaClient";
 import {
   CreatePhotoSchema,
   CommentSchema,
   RatingSchema,
   PaginationSchema,
   SearchSchema,
+  UpdatePhotoSchema,
 } from "../utils/schemas";
 import {
   NotFoundError,
@@ -18,7 +21,6 @@ import {
   Events,
 } from "@deelish-be/shared";
 import http from "http";
-import { UpdatePhotoSchema } from "../utils/schemas";
 
 const param = (p: string | string[]): string => (Array.isArray(p) ? p[0] : p);
 
@@ -32,42 +34,70 @@ function parsePhoto(photo: ReturnType<typeof photoRepository.findById>) {
 }
 
 function notifySearchService(doc: object) {
+  const searchHost = process.env.SEARCH_SERVICE_URL ?? "http://localhost:3005";
+  const url = new URL("/search/index", searchHost); // ← was "/index" before, now fixed
   const body = JSON.stringify(doc);
+
   const req = http.request({
-    hostname: "localhost",
-    port: 3005,
-    path: "/index",
+    hostname: url.hostname,
+    port: Number(url.port) || 3005,
+    path: url.pathname,
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Content-Length": Buffer.byteLength(body),
     },
   });
+  req.on("error", (err) =>
+    console.error("[search] index notification failed:", err.message),
+  );
   req.write(body);
   req.end();
-  // Fire and forget — search index failure should not break photo creation
 }
+
 export const socialController = {
   // POST /social/photos
-  // Called by creator after media upload succeeds — links media record to social record
+  // Now accepts multipart/form-data — file + metadata in one request.
+  // Social-service uploads to media-service internally, then creates its own record.
   async createPhoto(req: Request, res: Response, next: NextFunction) {
+    console.log("BODY:", req.body);
+    console.log("FILE:", req.file);
     try {
+      if (!req.file) throw new ValidationError("No image file provided");
+
+      const authHeader = req.headers.authorization;
+      if (!authHeader)
+        throw new ValidationError("Missing authorization header");
+
+      // 1. Validate metadata fields
       const result = CreatePhotoSchema.safeParse(req.body);
       if (!result.success) throw new ValidationError(result.error.message);
 
-      const { mediaId, url } = req.body as { mediaId: string; url: string };
-      if (!mediaId || !url)
-        throw new ValidationError("mediaId and url are required");
+      // 2. Forward file to media-service — get back mediaId + url
+      const mediaRecord = await uploadToMedia(req.file, authHeader);
 
+      // 3. Create social record
       const photo = photoRepository.create({
-        mediaId,
+        mediaId: mediaRecord.id,
         userId: req.user!.sub,
         username: req.user!.username,
-        url,
+        url: mediaRecord.url,
         ...result.data,
       });
 
-      invalidate("feed:1", "feed:all");
+      // 4. Notify analytics
+      eventBus.emit(Events.PHOTO_CREATED, {
+        mediaId: mediaRecord.id,
+        userId: req.user!.sub,
+        url: mediaRecord.url,
+        originalName: mediaRecord.original_name,
+        size: mediaRecord.size,
+        uploadedAt: mediaRecord.uploaded_at,
+      });
+
+      invalidate("feed:1", "feed:all", "feed:count");
+
+      // 5. Index in search (fire and forget)
       notifySearchService({
         photo_id: photo.id,
         title: photo.title,
@@ -79,6 +109,7 @@ export const socialController = {
         url: photo.url,
         created_at: photo.created_at,
       });
+
       res.status(201).json({ success: true, data: parsePhoto(photo) });
     } catch (e) {
       next(e);
@@ -125,12 +156,7 @@ export const socialController = {
 
       res.json({
         success: true,
-        data: {
-          photos: photos.map(parsePhoto),
-          query: q,
-          page,
-          limit,
-        },
+        data: { photos: photos.map(parsePhoto), query: q, page, limit },
       });
     } catch (e) {
       next(e);
@@ -141,15 +167,11 @@ export const socialController = {
   async getPhoto(req: Request, res: Response, next: NextFunction) {
     try {
       const id = param(req.params.id);
-      const cacheKey = `photo:${id}`;
-
-      const photo = cached(cacheKey, () => photoRepository.findById(id));
+      const photo = cached(`photo:${id}`, () => photoRepository.findById(id));
       if (!photo) throw new NotFoundError("Photo");
 
       const comments = commentRepository.findByPhotoId(id);
       const rating = ratingRepository.getAverage(id);
-
-      // If authenticated, include user's own rating
       let userRating: number | null = null;
       if (req.user) {
         const r = ratingRepository.getUserRating(id, req.user.sub);
@@ -217,19 +239,22 @@ export const socialController = {
         value: result.data.value,
       });
 
-      invalidate(`photo:${id}`, `feed:1:20`);
+      invalidate(`photo:${id}`, "feed:1:20");
       eventBus.emit(Events.RATING_CREATED, {
         photoOwnerId: photo.user_id,
         photoId: id,
         raterId: req.user!.sub,
       });
+
       res.json({ success: true, data: rating });
     } catch (e) {
       next(e);
     }
   },
 
-  // DELETE /social/photos/:id — creator can delete their own post
+  // DELETE /social/photos/:id
+  // Social-service is the orchestrator: tells media to delete the file,
+  // then removes its own record (cascade removes comments + ratings).
   async deletePhoto(req: Request, res: Response, next: NextFunction) {
     try {
       const id = param(req.params.id);
@@ -238,8 +263,22 @@ export const socialController = {
       if (photo.user_id !== req.user!.sub)
         throw new ForbiddenError("You do not own this photo");
 
+      const authHeader = req.headers.authorization!;
+
+      // 1. Tell media-service to delete the file (fire and forget)
+      //    Pass media_id — that's what media-service knows about
+      deleteFromMedia(photo.media_id, authHeader);
+
+      // 2. Delete social record (cascade removes comments + ratings via FK)
       photoRepository.delete(photo.media_id);
-      invalidate(`photo:${id}`, "feed:count");
+
+      // 3. Emit event — search-service and analytics-service clean up via listener
+      eventBus.emit(Events.PHOTO_DELETED, {
+        mediaId: photo.media_id,
+        userId: req.user!.sub,
+      });
+
+      invalidate(`photo:${id}`, "feed:count", "feed:1:20");
 
       res.json({ success: true, message: "Photo deleted" });
     } catch (e) {

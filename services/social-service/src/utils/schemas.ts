@@ -1,11 +1,17 @@
 import { z } from "zod";
 
+// Replace just these two fields in CreatePhotoSchema
+
+const stringToArray = z
+  .union([z.string(), z.array(z.string())])
+  .transform((val) => (Array.isArray(val) ? val : val ? [val] : []));
+
 export const CreatePhotoSchema = z.object({
   title: z.string().min(1).max(200),
   caption: z.string().max(1000).optional(),
-  tags: z.array(z.string()).default([]),
+  tags: stringToArray.default([]),
   location: z.string().max(200).optional(),
-  people: z.array(z.string()).default([]),
+  people: stringToArray.default([]),
 });
 
 export const CommentSchema = z.object({
