@@ -18,6 +18,7 @@ import {
   Events,
 } from "@deelish-be/shared";
 import http from "http";
+import { UpdatePhotoSchema } from "../utils/schemas";
 
 const param = (p: string | string[]): string => (Array.isArray(p) ? p[0] : p);
 
@@ -241,6 +242,26 @@ export const socialController = {
       invalidate(`photo:${id}`, "feed:count");
 
       res.json({ success: true, message: "Photo deleted" });
+    } catch (e) {
+      next(e);
+    }
+  },
+
+  async updatePhoto(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = param(req.params.id);
+      const photo = photoRepository.findById(id);
+      if (!photo) throw new NotFoundError("Photo");
+      if (photo.user_id !== req.user!.sub)
+        throw new ForbiddenError("You do not own this photo");
+
+      const result = UpdatePhotoSchema.safeParse(req.body);
+      if (!result.success) throw new ValidationError(result.error.message);
+
+      const updated = photoRepository.update(id, result.data);
+      invalidate(`photo:${id}`, "feed:1:20");
+
+      res.json({ success: true, data: parsePhoto(updated!) });
     } catch (e) {
       next(e);
     }

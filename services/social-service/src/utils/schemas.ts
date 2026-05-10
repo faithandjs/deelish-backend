@@ -26,3 +26,11 @@ export const SearchSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });
+
+export const UpdatePhotoSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  caption: z.string().max(1000).optional(),
+  tags: z.array(z.string()).optional(),
+  location: z.string().max(200).optional(),
+  people: z.array(z.string()).optional(),
+});

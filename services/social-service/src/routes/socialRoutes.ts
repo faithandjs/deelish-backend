@@ -28,5 +28,11 @@ router.delete(
 // Consumer and creator can both comment and rate
 router.post("/photos/:id/comment", authenticate, socialController.addComment);
 router.post("/photos/:id/rate", authenticate, socialController.ratePhoto);
+router.patch(
+  "/photos/:id",
+  authenticate,
+  requireRole("creator"),
+  socialController.updatePhoto,
+);
 
 export default router;

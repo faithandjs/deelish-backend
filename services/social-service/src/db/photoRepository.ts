@@ -126,4 +126,34 @@ export const photoRepository = {
   delete(mediaId: string): void {
     db.prepare("DELETE FROM photos WHERE media_id = ?").run(mediaId);
   },
+
+  update(
+    id: string,
+    data: {
+      title?: string;
+      caption?: string;
+      tags?: string[];
+      location?: string;
+      people?: string[];
+    },
+  ): DbPhoto | undefined {
+    const photo = this.findById(id);
+    if (!photo) return undefined;
+
+    const title = data.title ?? photo.title;
+    const caption = data.caption ?? photo.caption;
+    const tags = data.tags ? JSON.stringify(data.tags) : photo.tags;
+    const location = data.location ?? photo.location;
+    const people = data.people ? JSON.stringify(data.people) : photo.people;
+
+    db.prepare(
+      `
+    UPDATE photos
+    SET title = ?, caption = ?, tags = ?, location = ?, people = ?
+    WHERE id = ?
+  `,
+    ).run(title, caption, tags, location, people, id);
+
+    return this.findById(id);
+  },
 };
