@@ -98,7 +98,7 @@ jobs:
               {"name": "SEARCH_SERVICE_URL", "value": "https://deelish-search.azurewebsites.net"},
               {"name": "ANALYTICS_SERVICE_URL", "value": "https://deelish-analytics.azurewebsites.net"},
               {"name": "FRONTEND_URL", "value": "https://deelish-photo-app.vercel.app"},
-              {"name": "APPLICATIONINSIGHTS_CONNECTION_STRING", "value": "${{ secrets.APPINSIGHTS_CONNECTION_STRING }}"}
+              {"name": "APPINSIGHTS_CONNECTION_STRING", "value": "${{ secrets.APPINSIGHTS_CONNECTION_STRING }}"}
             ]
 
       - name: Set auth env vars
@@ -113,7 +113,7 @@ jobs:
               {"name": "JWT_PRIVATE_KEY_BASE64", "value": "${{ secrets.JWT_PRIVATE_KEY_BASE64 }}"},
               {"name": "JWT_PUBLIC_KEY_BASE64", "value": "${{ secrets.JWT_PUBLIC_KEY_BASE64 }}"},
               {"name": "COSMOS_CONNECTION_STRING", "value": "${{ secrets.COSMOS_CONNECTION_STRING }}"},
-              {"name": "APPLICATIONINSIGHTS_CONNECTION_STRING", "value": "${{ secrets.APPINSIGHTS_CONNECTION_STRING }}"}
+              {"name": "APPINSIGHTS_CONNECTION_STRING", "value": "${{ secrets.APPINSIGHTS_CONNECTION_STRING }}"}
             ]
 
       - name: Set media env vars
@@ -129,7 +129,7 @@ jobs:
               {"name": "AZURE_BLOB_CONNECTION_STRING", "value": "${{ secrets.AZURE_BLOB_CONNECTION_STRING }}"},
               {"name": "AZURE_BLOB_CONTAINER", "value": "photos"},
               {"name": "COSMOS_CONNECTION_STRING", "value": "${{ secrets.COSMOS_CONNECTION_STRING }}"},
-              {"name": "APPLICATIONINSIGHTS_CONNECTION_STRING", "value": "${{ secrets.APPINSIGHTS_CONNECTION_STRING }}"}
+              {"name": "APPINSIGHTS_CONNECTION_STRING", "value": "${{ secrets.APPINSIGHTS_CONNECTION_STRING }}"}
             ]
 
       - name: Set social env vars
@@ -145,7 +145,7 @@ jobs:
               {"name": "SEARCH_SERVICE_URL", "value": "https://deelish-search.azurewebsites.net"},
               {"name": "COSMOS_CONNECTION_STRING", "value": "${{ secrets.COSMOS_CONNECTION_STRING }}"},
               {"name": "SERVICE_BUS_CONNECTION_STRING", "value": "${{ secrets.SERVICE_BUS_CONNECTION_STRING }}"},
-              {"name": "APPLICATIONINSIGHTS_CONNECTION_STRING", "value": "${{ secrets.APPINSIGHTS_CONNECTION_STRING }}"}
+              {"name": "APPINSIGHTS_CONNECTION_STRING", "value": "${{ secrets.APPINSIGHTS_CONNECTION_STRING }}"}
             ]
 
       - name: Set ai env vars
@@ -172,7 +172,7 @@ jobs:
               {"name": "AUTH_SERVICE_URL", "value": "https://deelish-auth.azurewebsites.net"},
               {"name": "COSMOS_CONNECTION_STRING", "value": "${{ secrets.COSMOS_CONNECTION_STRING }}"},
               {"name": "SERVICE_BUS_CONNECTION_STRING", "value": "${{ secrets.SERVICE_BUS_CONNECTION_STRING }}"},
-              {"name": "APPLICATIONINSIGHTS_CONNECTION_STRING", "value": "${{ secrets.APPINSIGHTS_CONNECTION_STRING }}"}
+              {"name": "APPINSIGHTS_CONNECTION_STRING", "value": "${{ secrets.APPINSIGHTS_CONNECTION_STRING }}"}
             ]
 
       - name: Set analytics env vars
@@ -186,7 +186,7 @@ jobs:
               {"name": "AUTH_SERVICE_URL", "value": "https://deelish-auth.azurewebsites.net"},
               {"name": "COSMOS_CONNECTION_STRING", "value": "${{ secrets.COSMOS_CONNECTION_STRING }}"},
               {"name": "SERVICE_BUS_CONNECTION_STRING", "value": "${{ secrets.SERVICE_BUS_CONNECTION_STRING }}"},
-              {"name": "APPLICATIONINSIGHTS_CONNECTION_STRING", "value": "${{ secrets.APPINSIGHTS_CONNECTION_STRING }}"}
+              {"name": "APPINSIGHTS_CONNECTION_STRING", "value": "${{ secrets.APPINSIGHTS_CONNECTION_STRING }}"}
             ]
 
       # ── Deploy to Azure App Service ────────────────────────────────────────
