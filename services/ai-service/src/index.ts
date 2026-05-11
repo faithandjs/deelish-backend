@@ -10,7 +10,7 @@ import aiRoutes from "./routes/aiRoutes";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
-app.set("trust proxy", 1);
+// app.set("trust proxy", 1);
 const PORT = process.env.PORT ?? 3004;
 
 app.use(helmet());

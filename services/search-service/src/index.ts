@@ -15,7 +15,7 @@ import type { PhotoDeletedPayload } from "@deelish-be/shared";
 
 const app = express();
 
-app.set("trust proxy", 1);
+// app.set("trust proxy", 1);
 const PORT = process.env.PORT ?? 3005;
 
 app.use(helmet());

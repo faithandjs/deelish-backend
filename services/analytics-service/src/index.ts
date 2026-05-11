@@ -19,7 +19,7 @@ import type {
 } from "@deelish-be/shared";
 
 const app = express();
-app.set("trust proxy", 1);
+// app.set("trust proxy", 1);
 const PORT = process.env.PORT ?? 3006;
 
 app.use(helmet());
