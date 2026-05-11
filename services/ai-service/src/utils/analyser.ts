@@ -67,7 +67,7 @@ export async function analyse(
   const endpoint = process.env.AZURE_CV_ENDPOINT!;
   const key = process.env.AZURE_CV_KEY!;
 
-  const url = `${endpoint.replace(/\/$/, "")}/computervision/imageanalysis:analyze?api-version=2024-02-01&features=Caption,Tags`;
+  const url = `${endpoint.replace(/\/$/, "")}/computervision/imageanalysis:analyze?api-version=2024-02-01&features=Tags`;
 
   console.log("CV URL:", url);
   console.log("CV Key (first 8):", key?.slice(0, 8));
@@ -88,7 +88,7 @@ export async function analyse(
 
   const { captionResult, tagsResult } = response.data;
   return {
-    caption: captionResult?.text ?? "",
+    caption: "", // or generate from tags
     tags: tagsResult?.values?.map((t: { name: string }) => t.name) ?? [],
   };
 }
