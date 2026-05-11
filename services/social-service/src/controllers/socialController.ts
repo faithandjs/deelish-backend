@@ -20,6 +20,7 @@ import {
   Events,
 } from "@deelish-be/shared";
 import http from "http";
+import https from "https";
 
 const param = (p: string | string[]): string => (Array.isArray(p) ? p[0] : p);
 
@@ -37,9 +38,14 @@ function notifySearchService(doc: object) {
   const url = new URL("/search/index", searchHost);
   const body = JSON.stringify(doc);
 
-  const req = http.request({
+  const client = searchHost.startsWith("https") ? https : http;
+  const req = client.request({
     hostname: url.hostname,
-    port: Number(url.port) || 3005,
+    port: url.port
+      ? Number(url.port)
+      : searchHost.startsWith("https")
+        ? 443
+        : 3005,
     path: url.pathname,
     method: "POST",
     headers: {

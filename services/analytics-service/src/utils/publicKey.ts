@@ -1,3 +1,4 @@
+import https from "https";
 import http from "http";
 
 let cachedPublicKey: string | null = null;
@@ -7,7 +8,9 @@ export async function getPublicKey(): Promise<string> {
 
   return new Promise((resolve, reject) => {
     const url = `${process.env.AUTH_SERVICE_URL ?? "http://localhost:3001"}/.well-known/public-key`;
-    http
+    const client = url.startsWith("https") ? https : http;
+
+    client
       .get(url, (res) => {
         let data = "";
         res.on("data", (chunk: string) => {
