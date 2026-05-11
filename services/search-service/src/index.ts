@@ -1,4 +1,6 @@
 import "dotenv/config";
+import appInsights from "applicationinsights";
+appInsights.setup(process.env.APPLICATIONINSIGHTS_CONNECTION_STRING).start();
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -10,6 +12,8 @@ import { subscribe, closeEventBus, Events } from "@deelish-be/shared";
 import type { PhotoDeletedPayload } from "@deelish-be/shared";
 
 const app = express();
+
+app.set("trust proxy", 1);
 const PORT = process.env.PORT ?? 3005;
 
 app.use(helmet());

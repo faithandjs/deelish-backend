@@ -1,4 +1,6 @@
 import "dotenv/config";
+import appInsights from "applicationinsights";
+appInsights.setup(process.env.APPLICATIONINSIGHTS_CONNECTION_STRING).start();
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -8,6 +10,8 @@ import mediaRoutes from "./routes/mediaRoutes";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
+
+app.set("trust proxy", 1);
 const PORT = process.env.PORT ?? 3002;
 
 app.use(helmet());
