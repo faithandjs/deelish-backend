@@ -1,7 +1,5 @@
 // services/social-service/src/utils/mediaClient.ts
 
-const MEDIA_URL = process.env.MEDIA_SERVICE_URL ?? "http://localhost:3002";
-
 export interface MediaRecord {
   id: string;
   user_id: string;
@@ -21,6 +19,7 @@ export async function uploadToMedia(
   file: Express.Multer.File,
   authHeader: string,
 ): Promise<MediaRecord> {
+  const MEDIA_URL = process.env.MEDIA_SERVICE_URL ?? "http://localhost:3002";
   const formData = new FormData();
   const blob = new Blob([file.buffer as unknown as ArrayBuffer], {
     type: file.mimetype,
@@ -52,6 +51,7 @@ export async function uploadToMedia(
  * the social delete if media is slow or temporarily down.
  */
 export function deleteFromMedia(mediaId: string, authHeader: string): void {
+  const MEDIA_URL = process.env.MEDIA_SERVICE_URL ?? "http://localhost:3002";
   fetch(`${MEDIA_URL}/${mediaId}`, {
     // ← /media/:id → /:id
     method: "DELETE",
