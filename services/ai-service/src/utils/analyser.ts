@@ -71,9 +71,13 @@ export async function analyse(
     `${endpoint.replace(/\/$/, "")}/computervision/imageanalysis:analyze?api-version=2024-02-01&features=caption,tags`,
     imageData,
     {
+      // headers: {
+      //   "Ocp-Apim-Subscription-Key": key,
+      //   "Content-Type": _mimetype,
+      // },
       headers: {
         "Ocp-Apim-Subscription-Key": key,
-        "Content-Type": _mimetype,
+        "Content-Type": "application/octet-stream", // ← not _mimetype
       },
     },
   );
