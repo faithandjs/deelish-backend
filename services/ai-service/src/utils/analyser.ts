@@ -67,20 +67,19 @@ export async function analyse(
   const endpoint = process.env.AZURE_CV_ENDPOINT!;
   const key = process.env.AZURE_CV_KEY!;
 
-  const response = await axios.post(
-    `${endpoint.replace(/\/$/, "")}/computervision/imageanalysis:analyze?api-version=2024-02-01&features=caption,tags`,
-    imageData,
-    {
-      // headers: {
-      //   "Ocp-Apim-Subscription-Key": key,
-      //   "Content-Type": _mimetype,
-      // },
-      headers: {
-        "Ocp-Apim-Subscription-Key": key,
-        "Content-Type": "application/octet-stream", // ← not _mimetype
-      },
+  const url = `${endpoint.replace(/\/$/, "")}/computervision/imageanalysis:analyze?api-version=2024-02-01&features=caption,tags`;
+
+  console.log("CV URL:", url);
+  console.log("CV Key (first 8):", key?.slice(0, 8));
+  console.log("Content-Type:", _mimetype);
+  console.log("Image size:", imageData.length);
+
+  const response = await axios.post(url, imageData, {
+    headers: {
+      "Ocp-Apim-Subscription-Key": key,
+      "Content-Type": "application/octet-stream",
     },
-  );
+  });
 
   const { captionResult, tagsResult } = response.data;
   return {
