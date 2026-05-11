@@ -6,11 +6,8 @@ import { runMigrations } from "./db/migrate";
 import { searchRepository } from "./db/searchRepository";
 import searchRoutes from "./routes/searchRoutes";
 import { errorHandler } from "./middleware/errorHandler";
-import { eventBus, Events } from "@deelish-be/shared";
-import type {
-  PhotoCreatedPayload,
-  PhotoDeletedPayload,
-} from "@deelish-be/shared";
+import { subscribe, closeEventBus, Events } from "@deelish-be/shared";
+import type { PhotoDeletedPayload } from "@deelish-be/shared";
 
 const app = express();
 const PORT = process.env.PORT ?? 3005;
@@ -26,20 +23,23 @@ app.get("/health", (_req, res) =>
 app.use("/", searchRoutes);
 app.use(errorHandler);
 
-// ─── Event bus listeners ──────────────────────────────────────────────────────
+// ─── Service Bus subscriptions ────────────────────────────────────────────────
+// PHOTO_CREATED is not handled here — full metadata arrives via
+// POST /search/index called directly by social-service after photo creation.
 
-eventBus.on(Events.PHOTO_CREATED, (payload: PhotoCreatedPayload) => {
-  console.log("🔍 Indexing photo:", payload.mediaId);
-  // Note: at this point we only have mediaId and url from the media event.
-  // The full metadata (title, caption, tags) arrives when the frontend calls
-  // POST /social/photos — so Search service exposes an internal index endpoint
-  // that Social service calls after creating the photo record.
-  // For the mock, we index what we have and update when metadata arrives.
-});
+subscribe<PhotoDeletedPayload>(
+  Events.PHOTO_DELETED,
+  "search-sub",
+  async (payload) => {
+    console.log("🗑️ Removing from index:", payload.mediaId);
+    searchRepository.remove(payload.mediaId);
+  },
+);
 
-eventBus.on(Events.PHOTO_DELETED, (payload: PhotoDeletedPayload) => {
-  console.log("🗑️ Removing from index:", payload.mediaId);
-  searchRepository.remove(payload.mediaId);
+// ─── Graceful shutdown ────────────────────────────────────────────────────────
+process.on("SIGTERM", async () => {
+  await closeEventBus();
+  process.exit(0);
 });
 
 runMigrations();

@@ -6,10 +6,12 @@ import { runMigrations } from "./db/migrate";
 import { statsRepository } from "./db/statsRepository";
 import analyticsRoutes from "./routes/analyticsRoutes";
 import { errorHandler } from "./middleware/errorHandler";
-import { eventBus, Events } from "@deelish-be/shared";
+import { subscribe, closeEventBus, Events } from "@deelish-be/shared";
 import type {
   PhotoCreatedPayload,
   PhotoDeletedPayload,
+  CommentCreatedPayload,
+  RatingCreatedPayload,
 } from "@deelish-be/shared";
 
 const app = express();
@@ -26,31 +28,52 @@ app.get("/health", (_req, res) =>
 app.use("/", analyticsRoutes);
 app.use(errorHandler);
 
-// ─── Event listeners ──────────────────────────────────────────────────────────
+// ─── Service Bus subscriptions ────────────────────────────────────────────────
 
-eventBus.on(Events.PHOTO_CREATED, (payload: PhotoCreatedPayload) => {
-  console.log(
-    "📊 photo.created → incrementing photo count for",
-    payload.userId,
-  );
-  statsRepository.incrementPhotos(payload.userId);
-});
+subscribe<PhotoCreatedPayload>(
+  Events.PHOTO_CREATED,
+  "analytics-sub",
+  async (payload) => {
+    console.log(
+      "📊 photo.created → incrementing photo count for",
+      payload.userId,
+    );
+    statsRepository.incrementPhotos(payload.userId);
+  },
+);
 
-eventBus.on(Events.PHOTO_DELETED, (payload: PhotoDeletedPayload) => {
-  console.log(
-    "📊 photo.deleted → decrementing photo count for",
-    payload.userId,
-  );
-  statsRepository.decrementPhotos(payload.userId);
-});
+subscribe<PhotoDeletedPayload>(
+  Events.PHOTO_DELETED,
+  "analytics-sub",
+  async (payload) => {
+    console.log(
+      "📊 photo.deleted → decrementing photo count for",
+      payload.userId,
+    );
+    statsRepository.decrementPhotos(payload.userId);
+  },
+);
 
-// Social service emits these — add to shared eventBus types
-eventBus.on("comment.created", (payload: { photoOwnerId: string }) => {
-  statsRepository.incrementComments(payload.photoOwnerId);
-});
+subscribe<CommentCreatedPayload>(
+  Events.COMMENT_CREATED,
+  "analytics-sub",
+  async (payload) => {
+    statsRepository.incrementComments(payload.photoOwnerId);
+  },
+);
 
-eventBus.on("rating.created", (payload: { photoOwnerId: string }) => {
-  statsRepository.incrementRatings(payload.photoOwnerId);
+subscribe<RatingCreatedPayload>(
+  Events.RATING_CREATED,
+  "analytics-sub",
+  async (payload) => {
+    statsRepository.incrementRatings(payload.photoOwnerId);
+  },
+);
+
+// ─── Graceful shutdown ────────────────────────────────────────────────────────
+process.on("SIGTERM", async () => {
+  await closeEventBus();
+  process.exit(0);
 });
 
 runMigrations();

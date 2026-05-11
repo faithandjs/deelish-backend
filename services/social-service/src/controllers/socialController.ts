@@ -1,4 +1,3 @@
-// services/social-service/src/controllers/socialController.ts
 import type { Request, Response, NextFunction } from "express";
 import { photoRepository } from "../db/photoRepository";
 import { commentRepository } from "../db/commentRepository";
@@ -17,7 +16,7 @@ import {
   NotFoundError,
   ForbiddenError,
   ValidationError,
-  eventBus,
+  publish,
   Events,
 } from "@deelish-be/shared";
 import http from "http";
@@ -35,7 +34,7 @@ function parsePhoto(photo: ReturnType<typeof photoRepository.findById>) {
 
 function notifySearchService(doc: object) {
   const searchHost = process.env.SEARCH_SERVICE_URL ?? "http://localhost:3005";
-  const url = new URL("/search/index", searchHost); // ← was "/index" before, now fixed
+  const url = new URL("/search/index", searchHost);
   const body = JSON.stringify(doc);
 
   const req = http.request({
@@ -56,9 +55,6 @@ function notifySearchService(doc: object) {
 }
 
 export const socialController = {
-  // POST /social/photos
-  // Now accepts multipart/form-data — file + metadata in one request.
-  // Social-service uploads to media-service internally, then creates its own record.
   async createPhoto(req: Request, res: Response, next: NextFunction) {
     console.log("BODY:", req.body);
     console.log("FILE:", req.file);
@@ -69,14 +65,11 @@ export const socialController = {
       if (!authHeader)
         throw new ValidationError("Missing authorization header");
 
-      // 1. Validate metadata fields
       const result = CreatePhotoSchema.safeParse(req.body);
       if (!result.success) throw new ValidationError(result.error.message);
 
-      // 2. Forward file to media-service — get back mediaId + url
       const mediaRecord = await uploadToMedia(req.file, authHeader);
 
-      // 3. Create social record
       const photo = photoRepository.create({
         mediaId: mediaRecord.id,
         userId: req.user!.sub,
@@ -85,8 +78,8 @@ export const socialController = {
         ...result.data,
       });
 
-      // 4. Notify analytics
-      eventBus.emit(Events.PHOTO_CREATED, {
+      // Publish to Service Bus
+      await publish(Events.PHOTO_CREATED, {
         mediaId: mediaRecord.id,
         userId: req.user!.sub,
         url: mediaRecord.url,
@@ -97,7 +90,6 @@ export const socialController = {
 
       invalidate("feed:1", "feed:all", "feed:count");
 
-      // 5. Index in search (fire and forget)
       notifySearchService({
         photo_id: photo.id,
         title: photo.title,
@@ -116,7 +108,6 @@ export const socialController = {
     }
   },
 
-  // GET /social/photos?page=1&limit=20
   async getFeed(req: Request, res: Response, next: NextFunction) {
     try {
       const { page, limit } = PaginationSchema.parse(req.query);
@@ -143,7 +134,6 @@ export const socialController = {
     }
   },
 
-  // GET /social/photos/search?q=sunset&page=1
   async search(req: Request, res: Response, next: NextFunction) {
     try {
       const { q, page, limit } = SearchSchema.parse(req.query);
@@ -163,7 +153,6 @@ export const socialController = {
     }
   },
 
-  // GET /social/photos/:id
   async getPhoto(req: Request, res: Response, next: NextFunction) {
     try {
       const id = param(req.params.id);
@@ -193,7 +182,6 @@ export const socialController = {
     }
   },
 
-  // POST /social/photos/:id/comment
   async addComment(req: Request, res: Response, next: NextFunction) {
     try {
       const id = param(req.params.id);
@@ -211,7 +199,9 @@ export const socialController = {
       });
 
       invalidate(`photo:${id}`);
-      eventBus.emit(Events.COMMENT_CREATED, {
+
+      // Publish to Service Bus
+      await publish(Events.COMMENT_CREATED, {
         photoOwnerId: photo.user_id,
         photoId: id,
         commenterId: req.user!.sub,
@@ -223,7 +213,6 @@ export const socialController = {
     }
   },
 
-  // POST /social/photos/:id/rate
   async ratePhoto(req: Request, res: Response, next: NextFunction) {
     try {
       const id = param(req.params.id);
@@ -240,7 +229,9 @@ export const socialController = {
       });
 
       invalidate(`photo:${id}`, "feed:1:20");
-      eventBus.emit(Events.RATING_CREATED, {
+
+      // Publish to Service Bus
+      await publish(Events.RATING_CREATED, {
         photoOwnerId: photo.user_id,
         photoId: id,
         raterId: req.user!.sub,
@@ -252,9 +243,6 @@ export const socialController = {
     }
   },
 
-  // DELETE /social/photos/:id
-  // Social-service is the orchestrator: tells media to delete the file,
-  // then removes its own record (cascade removes comments + ratings).
   async deletePhoto(req: Request, res: Response, next: NextFunction) {
     try {
       const id = param(req.params.id);
@@ -265,15 +253,11 @@ export const socialController = {
 
       const authHeader = req.headers.authorization!;
 
-      // 1. Tell media-service to delete the file (fire and forget)
-      //    Pass media_id — that's what media-service knows about
       deleteFromMedia(photo.media_id, authHeader);
-
-      // 2. Delete social record (cascade removes comments + ratings via FK)
       photoRepository.delete(photo.media_id);
 
-      // 3. Emit event — search-service and analytics-service clean up via listener
-      eventBus.emit(Events.PHOTO_DELETED, {
+      // Publish to Service Bus
+      await publish(Events.PHOTO_DELETED, {
         mediaId: photo.media_id,
         userId: req.user!.sub,
       });

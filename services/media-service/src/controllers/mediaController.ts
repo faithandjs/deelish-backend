@@ -1,38 +1,42 @@
 import type { Request, Response, NextFunction } from "express";
-import path from "path";
-import fs from "fs";
 import { photoRepository } from "../db/photoRepository";
-import { eventBus, Events } from "@deelish-be/shared";
+import { publish, Events } from "@deelish-be/shared";
 import { UpdateFilenameSchema } from "../utils/schemas";
 import {
   NotFoundError,
   ForbiddenError,
   ValidationError,
 } from "@deelish-be/shared";
-import http from "http";
+import { uploadToBlob, containerClient } from "../utils/upload";
+
+const param = (p: string | string[]): string => (Array.isArray(p) ? p[0] : p);
 
 export const mediaController = {
-  // POST /media/upload — creator only
+  // POST /upload — creator only
   async upload(req: Request, res: Response, next: NextFunction) {
     try {
       if (!req.file) throw new ValidationError("No file provided");
 
       const userId = req.user!.sub;
-      const baseUrl = process.env.MEDIA_BASE_URL ?? "http://localhost:3002";
-      const gatewayUrl = process.env.GATEWAY_URL ?? "http://localhost:3000";
-      const url = `${gatewayUrl}/media/file/${req.file.filename}`;
+
+      // Upload buffer to Azure Blob
+      const { filename, url } = await uploadToBlob(
+        req.file.buffer,
+        req.file.originalname,
+        req.file.mimetype,
+      );
 
       const photo = photoRepository.create({
         user_id: userId,
-        filename: req.file.filename,
+        filename,
         original_name: req.file.originalname,
         mimetype: req.file.mimetype,
         size: req.file.size,
         url,
       });
 
-      // Notify other services
-      eventBus.emit(Events.PHOTO_CREATED, {
+      // Publish to Service Bus
+      await publish(Events.PHOTO_CREATED, {
         mediaId: photo.id,
         userId: photo.user_id,
         url: photo.url,
@@ -47,11 +51,8 @@ export const mediaController = {
     }
   },
 
-  // GET /media/:id — any authenticated user
   async getById(req: Request, res: Response, next: NextFunction) {
     try {
-      const param = (p: string | string[]): string =>
-        Array.isArray(p) ? p[0] : p;
       const photo = photoRepository.findById(param(req.params.id));
       if (!photo) throw new NotFoundError("Photo");
       res.json({ success: true, data: photo });
@@ -60,7 +61,6 @@ export const mediaController = {
     }
   },
 
-  // GET /media/my — creator sees their own uploads
   async getMyUploads(req: Request, res: Response, next: NextFunction) {
     try {
       const photos = photoRepository.findByUserId(req.user!.sub);
@@ -70,11 +70,8 @@ export const mediaController = {
     }
   },
 
-  // PATCH /media/:id — metadata edit, creator only, must own the photo
   async updateFilename(req: Request, res: Response, next: NextFunction) {
     try {
-      const param = (p: string | string[]): string =>
-        Array.isArray(p) ? p[0] : p;
       const photo = photoRepository.findById(param(req.params.id));
       if (!photo) throw new NotFoundError("Photo");
       if (photo.user_id !== req.user!.sub)
@@ -93,37 +90,27 @@ export const mediaController = {
     }
   },
 
-  // DELETE /media/:id — creator only, must own the photo
+  // DELETE /media/:id — deletes from Blob and DB
   async delete(req: Request, res: Response, next: NextFunction) {
     try {
-      const param = (p: string | string[]): string =>
-        Array.isArray(p) ? p[0] : p;
       const photo = photoRepository.findById(param(req.params.id));
       if (!photo) throw new NotFoundError("Photo");
       if (photo.user_id !== req.user!.sub)
         throw new ForbiddenError("You do not own this photo");
 
-      const filePath = path.join(
-        process.env.UPLOADS_DIR ?? "./uploads",
+      // Delete from Azure Blob
+      const blockBlobClient = containerClient.getBlockBlobClient(
         photo.filename,
       );
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      await blockBlobClient.deleteIfExists();
 
       photoRepository.delete(photo.id);
 
-      // Notify social and search directly via HTTP (event bus doesn't work cross-container)
-      const socialUrl =
-        process.env.SOCIAL_SERVICE_URL ?? "http://localhost:3003";
-      const searchUrl =
-        process.env.SEARCH_SERVICE_URL ?? "http://localhost:3005";
-
-      // Fire and forget — don't await, don't fail upload if these are slow
-      http
-        .request(`${socialUrl}/photos/${photo.id}`, { method: "DELETE" })
-        .end();
-      http
-        .request(`${searchUrl}/index/${photo.id}`, { method: "DELETE" })
-        .end();
+      // Publish to Service Bus
+      await publish(Events.PHOTO_DELETED, {
+        mediaId: photo.id,
+        userId: photo.user_id,
+      });
 
       res.json({ success: true, message: "Photo deleted" });
     } catch (e) {
@@ -131,20 +118,20 @@ export const mediaController = {
     }
   },
 
-  // GET /media/file/:filename — serves the actual image file (public, no auth)
-  serveFile(req: Request, res: Response, next: NextFunction) {
+  // GET /file/:filename — redirect to Azure Blob public URL
+  async serveFile(req: Request, res: Response, next: NextFunction) {
     try {
-      const param = (p: string | string[]): string =>
-        Array.isArray(p) ? p[0] : p;
-      const filePath = path.join(
-        path.resolve(process.env.UPLOADS_DIR ?? "./uploads"),
-        path.basename(param(req.params.filename)),
-      );
-      if (!fs.existsSync(filePath)) throw new NotFoundError("File");
+      const filename = param(req.params.filename);
+      const blockBlobClient = containerClient.getBlockBlobClient(filename);
 
-      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin"); // ← add this
-      res.setHeader("Access-Control-Allow-Origin", "*"); // ← add this
-      res.sendFile(filePath);
+      // Check blob exists
+      const exists = await blockBlobClient.exists();
+      if (!exists) throw new NotFoundError("File");
+
+      // Redirect to the public blob URL
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.redirect(blockBlobClient.url);
     } catch (e) {
       next(e);
     }
