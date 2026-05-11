@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@deelish-be/shared": "*",
+    "applicationinsights": "^3.14.0",
+    "axios": "^1.16.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",

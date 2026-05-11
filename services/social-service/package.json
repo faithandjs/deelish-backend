@@ -10,7 +10,10 @@
     "@types/express": "*"
   },
   "dependencies": {
+    "@azure/cosmos": "^4.9.3",
+    "@azure/service-bus": "^7.9.5",
     "@deelish-be/shared": "*",
+    "applicationinsights": "^3.14.0",
     "better-sqlite3": "^9.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

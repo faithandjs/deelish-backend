@@ -1,0 +1,250 @@
+name: Build and Deploy Deelish Backend
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  ACR_REGISTRY: deelishacr.azurecr.io
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Azure Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: deelishacr.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.DEELISHACR }}
+
+      # ── Build and push all images ──────────────────────────────────────────
+
+      - name: Build and push gateway
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/gateway.Dockerfile
+          push: true
+          tags: deelishacr.azurecr.io/deelish/gateway:latest
+
+      - name: Build and push auth-service
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/auth.Dockerfile
+          push: true
+          tags: deelishacr.azurecr.io/deelish/auth-service:latest
+
+      - name: Build and push media-service
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/media.Dockerfile
+          push: true
+          tags: deelishacr.azurecr.io/deelish/media-service:latest
+
+      - name: Build and push social-service
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/social.Dockerfile
+          push: true
+          tags: deelishacr.azurecr.io/deelish/social-service:latest
+
+      - name: Build and push ai-service
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/ai.Dockerfile
+          push: true
+          tags: deelishacr.azurecr.io/deelish/ai-service:latest
+
+      - name: Build and push search-service
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/search.Dockerfile
+          push: true
+          tags: deelishacr.azurecr.io/deelish/search-service:latest
+
+      - name: Build and push analytics-service
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/analytics.Dockerfile
+          push: true
+          tags: deelishacr.azurecr.io/deelish/analytics-service:latest
+
+      # ── Set environment variables on App Services ─────────────────────────
+
+      - name: Set gateway env vars
+        uses: azure/appservice-settings@v1
+        with:
+          app-name: deelish-gateway
+          publish-profile: ${{ secrets.PUBLISH_PROFILE_GATEWAY }}
+          app-settings-json: |
+            [
+              {"name": "PORT", "value": "3000"},
+              {"name": "NODE_ENV", "value": "production"},
+              {"name": "AUTH_SERVICE_URL", "value": "https://deelish-auth.azurewebsites.net"},
+              {"name": "MEDIA_SERVICE_URL", "value": "https://deelish-media.azurewebsites.net"},
+              {"name": "SOCIAL_SERVICE_URL", "value": "https://deelish-social.azurewebsites.net"},
+              {"name": "AI_SERVICE_URL", "value": "https://deelish-ai.azurewebsites.net"},
+              {"name": "SEARCH_SERVICE_URL", "value": "https://deelish-search.azurewebsites.net"},
+              {"name": "ANALYTICS_SERVICE_URL", "value": "https://deelish-analytics.azurewebsites.net"},
+              {"name": "FRONTEND_URL", "value": "https://deelish-photo-app.vercel.app"},
+              {"name": "APPLICATIONINSIGHTS_CONNECTION_STRING", "value": "${{ secrets.APPINSIGHTS_CONNECTION_STRING }}"}
+            ]
+
+      - name: Set auth env vars
+        uses: azure/appservice-settings@v1
+        with:
+          app-name: deelish-auth
+          publish-profile: ${{ secrets.PUBLISH_PROFILE_AUTH }}
+          app-settings-json: |
+            [
+              {"name": "PORT", "value": "3001"},
+              {"name": "NODE_ENV", "value": "production"},
+              {"name": "BCRYPT_ROUNDS", "value": "10"},
+              {"name": "JWT_PRIVATE_KEY_BASE64", "value": "${{ secrets.JWT_PRIVATE_KEY_BASE64 }}"},
+              {"name": "JWT_PUBLIC_KEY_BASE64", "value": "${{ secrets.JWT_PUBLIC_KEY_BASE64 }}"},
+              {"name": "COSMOS_CONNECTION_STRING", "value": "${{ secrets.COSMOS_CONNECTION_STRING }}"},
+              {"name": "APPLICATIONINSIGHTS_CONNECTION_STRING", "value": "${{ secrets.APPINSIGHTS_CONNECTION_STRING }}"}
+            ]
+
+      - name: Set media env vars
+        uses: azure/appservice-settings@v1
+        with:
+          app-name: deelish-media
+          publish-profile: ${{ secrets.PUBLISH_PROFILE_MEDIA }}
+          app-settings-json: |
+            [
+              {"name": "PORT", "value": "3002"},
+              {"name": "NODE_ENV", "value": "production"},
+              {"name": "AUTH_SERVICE_URL", "value": "https://deelish-auth.azurewebsites.net"},
+              {"name": "GATEWAY_URL", "value": "https://deelish-gateway.azurewebsites.net"},
+              {"name": "AZURE_BLOB_CONNECTION_STRING", "value": "${{ secrets.AZURE_BLOB_CONNECTION_STRING }}"},
+              {"name": "AZURE_BLOB_CONTAINER", "value": "photos"},
+              {"name": "COSMOS_CONNECTION_STRING", "value": "${{ secrets.COSMOS_CONNECTION_STRING }}"},
+              {"name": "SOCIAL_SERVICE_URL", "value": "https://deelish-social.azurewebsites.net"},
+              {"name": "SEARCH_SERVICE_URL", "value": "https://deelish-search.azurewebsites.net"},
+              {"name": "APPLICATIONINSIGHTS_CONNECTION_STRING", "value": "${{ secrets.APPINSIGHTS_CONNECTION_STRING }}"}
+            ]
+
+      - name: Set social env vars
+        uses: azure/appservice-settings@v1
+        with:
+          app-name: deelish-social
+          publish-profile: ${{ secrets.PUBLISH_PROFILE_SOCIAL }}
+          app-settings-json: |
+            [
+              {"name": "PORT", "value": "3003"},
+              {"name": "NODE_ENV", "value": "production"},
+              {"name": "AUTH_SERVICE_URL", "value": "https://deelish-auth.azurewebsites.net"},
+              {"name": "MEDIA_SERVICE_URL", "value": "https://deelish-media.azurewebsites.net"},
+              {"name": "SEARCH_SERVICE_URL", "value": "https://deelish-search.azurewebsites.net"},
+              {"name": "COSMOS_CONNECTION_STRING", "value": "${{ secrets.COSMOS_CONNECTION_STRING }}"},
+              {"name": "SERVICE_BUS_CONNECTION_STRING", "value": "${{ secrets.SERVICE_BUS_CONNECTION_STRING }}"},
+              {"name": "APPLICATIONINSIGHTS_CONNECTION_STRING", "value": "${{ secrets.APPINSIGHTS_CONNECTION_STRING }}"}
+            ]
+
+      - name: Set ai env vars
+        uses: azure/appservice-settings@v1
+        with:
+          app-name: deelish-ai
+          publish-profile: ${{ secrets.PUBLISH_PROFILE_AI }}
+          app-settings-json: |
+            [
+              {"name": "PORT", "value": "3004"},
+              {"name": "NODE_ENV", "value": "production"},
+              {"name": "USE_MOCK_AI", "value": "false"},
+              {"name": "AZURE_CV_ENDPOINT", "value": "${{ secrets.AZURE_VISION_ENDPOINT }}"},
+              {"name": "AZURE_CV_KEY", "value": "${{ secrets.AZURE_VISION_KEY }}"}
+            ]
+
+      - name: Set search env vars
+        uses: azure/appservice-settings@v1
+        with:
+          app-name: deelish-search
+          publish-profile: ${{ secrets.PUBLISH_PROFILE_SEARCH }}
+          app-settings-json: |
+            [
+              {"name": "PORT", "value": "3005"},
+              {"name": "NODE_ENV", "value": "production"},
+              {"name": "AUTH_SERVICE_URL", "value": "https://deelish-auth.azurewebsites.net"},
+              {"name": "COSMOS_CONNECTION_STRING", "value": "${{ secrets.COSMOS_CONNECTION_STRING }}"},
+              {"name": "SERVICE_BUS_CONNECTION_STRING", "value": "${{ secrets.SERVICE_BUS_CONNECTION_STRING }}"},
+              {"name": "APPLICATIONINSIGHTS_CONNECTION_STRING", "value": "${{ secrets.APPINSIGHTS_CONNECTION_STRING }}"}
+            ]
+
+      - name: Set analytics env vars
+        uses: azure/appservice-settings@v1
+        with:
+          app-name: deelish-analytics
+          publish-profile: ${{ secrets.PUBLISH_PROFILE_ANALYTICS }}
+          app-settings-json: |
+            [
+              {"name": "PORT", "value": "3006"},
+              {"name": "NODE_ENV", "value": "production"},
+              {"name": "AUTH_SERVICE_URL", "value": "https://deelish-auth.azurewebsites.net"},
+              {"name": "COSMOS_CONNECTION_STRING", "value": "${{ secrets.COSMOS_CONNECTION_STRING }}"},
+              {"name": "SERVICE_BUS_CONNECTION_STRING", "value": "${{ secrets.SERVICE_BUS_CONNECTION_STRING }}"},
+              {"name": "APPLICATIONINSIGHTS_CONNECTION_STRING", "value": "${{ secrets.APPINSIGHTS_CONNECTION_STRING }}"}
+            ]
+
+      # ── Deploy to Azure App Service ────────────────────────────────────────
+
+      - name: Deploy gateway
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: deelish-gateway
+          publish-profile: ${{ secrets.PUBLISH_PROFILE_GATEWAY }}
+          images: deelishacr.azurecr.io/deelish/gateway:latest
+
+      - name: Deploy auth-service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: deelish-auth
+          publish-profile: ${{ secrets.PUBLISH_PROFILE_AUTH }}
+          images: deelishacr.azurecr.io/deelish/auth-service:latest
+
+      - name: Deploy media-service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: deelish-media
+          publish-profile: ${{ secrets.PUBLISH_PROFILE_MEDIA }}
+          images: deelishacr.azurecr.io/deelish/media-service:latest
+
+      - name: Deploy social-service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: deelish-social
+          publish-profile: ${{ secrets.PUBLISH_PROFILE_SOCIAL }}
+          images: deelishacr.azurecr.io/deelish/social-service:latest
+
+      - name: Deploy ai-service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: deelish-ai
+          publish-profile: ${{ secrets.PUBLISH_PROFILE_AI }}
+          images: deelishacr.azurecr.io/deelish/ai-service:latest
+
+      - name: Deploy search-service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: deelish-search
+          publish-profile: ${{ secrets.PUBLISH_PROFILE_SEARCH }}
+          images: deelishacr.azurecr.io/deelish/search-service:latest
+
+      - name: Deploy analytics-service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: deelish-analytics
+          publish-profile: ${{ secrets.PUBLISH_PROFILE_ANALYTICS }}
+          images: deelishacr.azurecr.io/deelish/analytics-service:latest

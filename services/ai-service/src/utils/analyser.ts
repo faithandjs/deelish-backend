@@ -1,4 +1,6 @@
 import path from "path";
+import axios from "axios";
+import fs from "fs";
 
 export interface AnalysisResult {
   caption: string;
@@ -61,31 +63,24 @@ export async function analyse(
   }
 
   // ─── Azure Computer Vision (uncomment when switching) ──────────────────
-  // import axios from 'axios'
-  // import fs from 'fs'
-  //
-  // const imageData = fs.readFileSync(filePath)
-  // const endpoint  = process.env.AZURE_CV_ENDPOINT!
-  // const key       = process.env.AZURE_CV_KEY!
-  //
-  // const response = await axios.post(
-  //   `${endpoint}/computervision/imageanalysis:analyze?api-version=2023-02-01-preview&features=caption,tags`,
-  //   imageData,
-  //   {
-  //     headers: {
-  //       'Ocp-Apim-Subscription-Key': key,
-  //       'Content-Type': _mimetype
-  //     }
-  //   }
-  // )
-  //
-  // const { captionResult, tagsResult } = response.data
-  // return {
-  //   caption: captionResult?.text ?? '',
-  //   tags:    tagsResult?.values?.map((t: { name: string }) => t.name) ?? []
-  // }
+  const imageData = fs.readFileSync(filePath);
+  const endpoint = process.env.AZURE_CV_ENDPOINT!;
+  const key = process.env.AZURE_CV_KEY!;
 
-  throw new Error(
-    "Azure CV not configured — set USE_MOCK_AI=false and provide credentials",
+  const response = await axios.post(
+    `${endpoint}/computervision/imageanalysis:analyze?api-version=2023-02-01-preview&features=caption,tags`,
+    imageData,
+    {
+      headers: {
+        "Ocp-Apim-Subscription-Key": key,
+        "Content-Type": _mimetype,
+      },
+    },
   );
+
+  const { captionResult, tagsResult } = response.data;
+  return {
+    caption: captionResult?.text ?? "",
+    tags: tagsResult?.values?.map((t: { name: string }) => t.name) ?? [],
+  };
 }

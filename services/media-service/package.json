@@ -7,7 +7,10 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "@azure/cosmos": "^4.9.3",
+    "@azure/storage-blob": "^12.31.0",
     "@deelish-be/shared": "*",
+    "applicationinsights": "^3.14.0",
     "axios": "^1.7.2",
     "better-sqlite3": "^9.4.3",
     "cors": "^2.8.5",
