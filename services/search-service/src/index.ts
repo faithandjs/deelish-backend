@@ -1,6 +1,8 @@
 import "dotenv/config";
 import appInsights from "applicationinsights";
-appInsights.setup(process.env.APPLICATIONINSIGHTS_CONNECTION_STRING).start();
+if (process.env.APPLICATIONINSIGHTS_CONNECTION_STRING) {
+  appInsights.setup(process.env.APPLICATIONINSIGHTS_CONNECTION_STRING).start();
+}
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
