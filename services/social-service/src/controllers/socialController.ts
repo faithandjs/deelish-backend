@@ -35,7 +35,7 @@ function parsePhoto(photo: ReturnType<typeof photoRepository.findById>) {
 
 function notifySearchService(doc: object) {
   const searchHost = process.env.SEARCH_SERVICE_URL ?? "http://localhost:3005";
-  const url = new URL("/search/index", searchHost);
+  const url = new URL("/index", searchHost);
   const body = JSON.stringify(doc);
 
   const client = searchHost.startsWith("https") ? https : http;
