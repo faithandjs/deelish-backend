@@ -68,7 +68,7 @@ export async function analyse(
   const key = process.env.AZURE_CV_KEY!;
 
   const response = await axios.post(
-    `${endpoint}/computervision/imageanalysis:analyze?api-version=2023-02-01-preview&features=caption,tags`,
+    `${endpoint.replace(/\/$/, "")}/computervision/imageanalysis:analyze?api-version=2024-02-01&features=caption,tags`,
     imageData,
     {
       headers: {
