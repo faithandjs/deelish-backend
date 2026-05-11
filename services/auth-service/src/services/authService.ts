@@ -6,21 +6,24 @@ import type { RegisterInput, LoginInput } from "../utils/schema";
 
 export const authService = {
   async register(input: RegisterInput) {
-    const existing = userRepository.findByUsername(input.username);
+    const existing = await userRepository.findByUsername(input.username);
     if (existing) throw new ConflictError("Username already taken");
 
     const hashedPassword = await bcrypt.hash(
       input.password,
       Number(process.env.BCRYPT_ROUNDS ?? 10),
     );
-    const user = userRepository.create({ ...input, password: hashedPassword });
+    const user = await userRepository.create({
+      ...input,
+      password: hashedPassword,
+    });
     const accessToken = issueAccessToken(user);
 
     return { accessToken, user: sanitize(user) };
   },
 
   async login(input: LoginInput) {
-    const user = userRepository.findByUsername(input.username);
+    const user = await userRepository.findByUsername(input.username);
     if (!user) throw new UnauthorizedError("Invalid credentials");
 
     const valid = await bcrypt.compare(input.password, user.password);
